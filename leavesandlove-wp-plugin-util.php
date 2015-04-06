@@ -83,8 +83,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			'version'				=> '1.0.0',
 			'required_wp'			=> '3.5.0',
 			'required_php'			=> '5.2.0',
+			'main_file'				=> '',
+			'basename'				=> '',
 			'autoload_namespace'	=> '',
 			'autoload_path'			=> '',
+			'textdomain'			=> '',
+			'textdomain_dir'		=> '',
 		);
 
 		private $status = null;
@@ -92,9 +96,31 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 		private function __construct( $args = array() ) {
 			$this->args = wp_parse_args( $args, $this->args );
 
+			if ( empty( $this->args['basename'] ) && ! empty( $this->args['main_file'] ) ) {
+				$this->args['basename'] = plugin_basename( $this->args['main_file'] );
+			}
+
+			if ( empty( $this->args['textdomain_dir'] ) && ! empty( $this->args['basename'] ) ) {
+				$this->args['textdomain_dir'] = dirname( $this->args['basename'] ) . '/languages/';
+			}
+
 			if ( ! empty( $this->args['autoload_namespace'] ) && ! empty( $this->args['autoload_path'] ) ) {
 				self::register_autoload_namespace( $this->args['autoload_namespace'], $this->args['autoload_path'] );
 			}
+		}
+
+		public function __get( $field ) {
+			if ( isset( $this->args[ $field ] ) ) {
+				return $this->args[ $field ];
+			}
+			return false;
+		}
+
+		public function load_textdomain() {
+			if ( ! empty( $this->args['textdomain'] ) && ! empty( $this->args['textdomain_dir'] ) ) {
+				return load_plugin_textdomain( $this->args['textdomain'], false, $this->args['textdomain_dir'] );
+			}
+			return false;
 		}
 
 		public function do_version_check() {
@@ -114,7 +140,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 				}
 			}
 
-			return $this->status;
+			if ( $this->status > 0 ) {
+				return true;
+			}
+			return false;
 		}
 
 		public function _display_version_error_notice() {
@@ -135,6 +164,23 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 				}
 				echo '<p>' . __( 'Please update the above resources to run it.', 'lalwpplugin' ) . '</p>';
 				echo '</div>';
+			}
+		}
+
+		public function doing_it_wrong( $function, $message, $version = '' ) {
+			if ( WP_DEBUG && apply_filters( 'doing_it_wrong_trigger_error', true ) ) {
+				$version = !empty( $version ) ? sprintf( __( 'This message was added in %1$s version %2$s.', 'lalwpplugin' ), '&quot;' . $this->args['name'] . '&quot;', $version ) : '';
+				trigger_error( sprintf( __( '%1$s was called <strong>incorrectly</strong>: %2$s %3$s', 'lalwpplugin' ), $function, $message, $version ) );
+			}
+		}
+
+		public function deprecated_function( $function, $version, $replacement = null ) {
+			if ( WP_DEBUG && apply_filters( 'deprecated_function_trigger_error', true ) ) {
+				if ( $replacement === null ) {
+					trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no alternative available.', 'lalwpplugin' ), $function, $version, '', '&quot;' . $this->args['name'] . '&quot;' ) );
+				} else {
+					trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s instead!', 'lalwpplugin' ), $function, $version, $replacement, '&quot;' . $this->args['name'] . '&quot;' ) );
+				}
 			}
 		}
 
