@@ -15,10 +15,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			self::$instances = array();
 			self::$autoload_paths = array_fill( 0, 10, array() );
 
-			self::load_textdomain();
+			self::_load_textdomain();
 
 			if ( function_exists( 'spl_autoload_register' ) ) {
-				spl_autoload_register( array( __CLASS__, 'autoload' ), true, true );
+				spl_autoload_register( array( __CLASS__, '_autoload' ), true, true );
 			}
 		}
 
@@ -29,7 +29,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return self::$instances[ $name ];
 		}
 
-		public static function autoload( $class_name ) {
+		public static function _autoload( $class_name ) {
 			$parts = explode( '\\', $class_name );
 
 			$class_name = array_pop( $parts );
@@ -65,7 +65,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return true;
 		}
 
-		private static function load_textdomain() {
+		private static function _load_textdomain() {
 			$domain = 'lalwpplugin';
 			$locale = get_locale();
 			$path = dirname( __FILE__ ) . '/languages/';
