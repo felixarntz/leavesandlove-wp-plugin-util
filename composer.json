@@ -1,0 +1,21 @@
+{
+  "name": "felixarntz/leavesandlove-wp-plugin-util",
+  "description": "Utility class used by Leaves and Love plugins for WordPress.",
+  "version": "1.0.0",
+  "license": "GPL-2.0",
+  "keywords": [
+    "wordpress"
+  ],
+  "authors": [
+    {
+      "name": "Felix Arntz",
+      "email": "felix-arntz@leaves-and-love.net",
+      "homepage": "http://leaves-and-love.net",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "email": "felix-arntz@leaves-and-love.net",
+    "issues": "https://github.com/felixarntz/leavesandlove-wp-plugin-util/issues"
+  }
+}
