@@ -9,16 +9,16 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 	class LaL_WP_Plugin_Util {
 
 		private static $instances = null;
-		private static $autoload_paths = null;
+		private static $autoload_classes = null;
 
 		public static function init() {
 			self::$instances = array();
-			self::$autoload_paths = array_fill( 0, 10, array() );
+			self::$autoload_classes = array();
 
 			self::_load_textdomain();
 
 			if ( function_exists( 'spl_autoload_register' ) ) {
-				spl_autoload_register( array( __CLASS__, '_autoload' ), true, true );
+				spl_autoload_register( array( __CLASS__, '_autoload' ) );
 			}
 		}
 
@@ -198,37 +198,23 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return $output;
 		}
 
-		public static function register_autoload_namespace( $namespace, $path ) {
-			$parts = explode( '\\', $namespace );
-			$count = count( $parts );
-
-			if ( $count > 10 || $count < 1 ) {
-				return false;
+		public static function register_autoload_classes( $classes = array() ) {
+			if ( is_array( $classes ) && count( $classes ) > 0 && ! isset( $classes[0] ) ) {
+				self::$autoload_classes = array_merge( self::$autoload_classes, $classes );
+				return true;
 			}
 
-			self::$autoload_paths[ $count - 1 ][ $namespace ] = untrailingslashit( $path );
-			return true;
+			return false;
 		}
 
 		public static function _autoload( $class_name ) {
-			$parts = explode( '\\', $class_name );
+			if ( ! class_exists( $class_name ) ) {
+				$class_name = strtolower( $class_name );
 
-			$class_name = array_pop( $parts );
-			$namespace = implode( '\\', $parts );
-			$count = count( $parts );
-
-			while ( $count > 0 ) {
-				if ( isset( self::$autoload_paths[ $count - 1 ][ $namespace ] ) ) {
-					$file = self::$autoload_paths[ $count - 1 ][ $namespace ] . '/' . $class_name . '.php';
-					if ( file_exists( $file ) ) {
-						require_once $file;
-						return true;
-					}
+				if ( isset( self::$autoload_classes[ $class_name ] ) ) {
+					require_once self::$autoload_classes[ $class_name ];
+					return true;
 				}
-
-				$class_name = array_pop( $parts ) . '/' . $class_name;
-				$namespace = implode( '\\', $parts );
-				$count = count( $parts );
 			}
 
 			return false;
@@ -290,12 +276,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			'required_php'			=> '5.2.0',
 			'main_file'				=> '',
 			'basename'				=> '',
-			'autoload_namespace'	=> '',
-			'autoload_path'			=> '',
+			'autoload_classes'		=> array(),
 			'textdomain'			=> '',
 			'textdomain_dir'		=> '',
 		);
 
+		private $activated = true;
 		private $status = null;
 
 		private function __construct( $args = array() ) {
@@ -309,8 +295,8 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 				$this->args['textdomain_dir'] = dirname( $this->args['basename'] ) . '/languages/';
 			}
 
-			if ( ! empty( $this->args['autoload_namespace'] ) && ! empty( $this->args['autoload_path'] ) ) {
-				self::register_autoload_namespace( $this->args['autoload_namespace'], $this->args['autoload_path'] );
+			if ( count( $this->args['autoload_classes'] ) > 0 ) {
+				self::register_autoload_classes( $this->args['autoload_classes'] );
 			}
 		}
 
@@ -321,11 +307,48 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return false;
 		}
 
+		public function maybe_init( $init_function, $spl_available = true ) {
+
+			$running = false;
+			if ( $spl_available ) {
+				if ( $this->do_version_check() ) {
+					$running = true;
+					if ( ! defined( 'WP_INSTALLING' ) || WP_INSTALLING === false ) {
+						add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 1 );
+						add_action( 'plugins_loaded', $init_function );
+					}
+				} else {
+					if ( is_admin() ) {
+						add_action( 'admin_notices', array( $this, '_display_version_error_notice' ) );
+					}
+				}
+			} else {
+				if ( is_admin() ) {
+					add_action( 'admin_notices', array( $this, '_display_spl_error_notice' ) );
+				}
+			}
+
+			if ( ! $running && is_admin() ) {
+				add_action( 'admin_init', array( $this, 'deactivate' ) );
+			}
+		}
+
 		public function load_textdomain() {
 			if ( ! empty( $this->args['textdomain'] ) && ! empty( $this->args['textdomain_dir'] ) ) {
 				return load_plugin_textdomain( $this->args['textdomain'], false, $this->args['textdomain_dir'] );
 			}
 			return false;
+		}
+
+		public function deactivate() {
+			if ( $this->activated && ! empty( $this->args['basename'] ) ) {
+				$this->activated = false;
+
+				deactivate_plugins( $this->args['basename'] );
+				if ( isset( $_GET['activate'] ) ) {
+					unset( $_GET['activate'] );
+				}
+			}
 		}
 
 		public function do_version_check() {
@@ -338,10 +361,6 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 				}
 				if ( ! empty( $this->args['required_php'] ) && version_compare( phpversion(), $this->args['required_php'] ) < 0 ) {
 					$this->status -= 2;
-				}
-
-				if ( $this->status < 1 ) {
-					add_action( 'admin_notices', array( $this, '_display_version_error_notice' ) );
 				}
 			}
 
@@ -368,8 +387,17 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 					echo '</p>';
 				}
 				echo '<p>' . __( 'Please update the above resources to run it.', 'lalwpplugin' ) . '</p>';
+				echo '<p>' . __( 'The plugin has been deactivated for now.', 'lalwpplugin' ) . '</p>';
 				echo '</div>';
 			}
+		}
+
+		public function _display_spl_error_notice() {
+			echo '<div class="error">';
+			echo '<p>' . sprintf( __( 'Fatal problem with plugin %s', 'lalwpplugin' ), '<strong>' . $this->args['name'] . ':</strong>' ) . '</p>';
+			echo '<p>' . __( 'The PHP SPL functions can not be found. Please ask your hosting provider to enable them.', 'lalwpplugin' ) . '</p>';
+			echo '<p>' . __( 'The plugin has been deactivated for now.', 'lalwpplugin' ) . '</p>';
+			echo '</div>';
 		}
 
 		public function doing_it_wrong( $function, $message, $version = '' ) {
