@@ -29,6 +29,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return self::$instances[ $name ];
 		}
 
+		public static function is_installed( $plugin_name ) {
+			return isset( self::$instances[ $plugin_name ] );
+		}
+
 		public static function format( $value, $type, $mode = 'input', $args = array() ) {
 			$mode = $mode == 'output' ? 'output' : 'input';
 
