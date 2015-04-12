@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: leaves-wp-plugin-util\n"
 "Report-Msgid-Bugs-To: http://leaves-and-love.net\n"
-"POT-Creation-Date: 2015-04-11 12:10:10+00:00\n"
-"PO-Revision-Date: 2015-04-11 14:12+0100\n"
+"POT-Creation-Date: 2015-04-12 13:05:03+00:00\n"
+"PO-Revision-Date: 2015-04-12 15:05+0100\n"
 "Last-Translator: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language-Team: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language: de_DE\n"
@@ -22,11 +22,34 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: leavesandlove-wp-plugin-util.php:378 leavesandlove-wp-plugin-util.php:397
+#: leavesandlove-wp-plugin-util.php:501
+msgid "This message was added in %1$s version %2$s."
+msgstr "Diese Meldung wurde in %1$s Version %2$s hinzugefügt."
+
+#: leavesandlove-wp-plugin-util.php:502
+msgid "%1$s was called <strong>incorrectly</strong>: %2$s %3$s"
+msgstr "%1$s wurde <strong>fehlerhaft</strong> aufgerufen: %2$s %3$s"
+
+#: leavesandlove-wp-plugin-util.php:509
+msgid ""
+"%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no "
+"alternative available."
+msgstr ""
+"%1$s ist seit %4$s Version %2$s ohne Alternative <strong>veraltet</strong>."
+
+#: leavesandlove-wp-plugin-util.php:511
+msgid ""
+"%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s "
+"instead!"
+msgstr ""
+"%1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. Verwenden Sie "
+"stattdessen %3$s!"
+
+#: leavesandlove-wp-plugin-util.php:521 leavesandlove-wp-plugin-util.php:540
 msgid "Fatal problem with plugin %s"
 msgstr "Schwerwiegendes Problem mit Plugin %s"
 
-#: leavesandlove-wp-plugin-util.php:381
+#: leavesandlove-wp-plugin-util.php:524
 msgid ""
 "The plugin requires WordPress version %1$s. However, you are currently using "
 "version %2$s."
@@ -34,7 +57,7 @@ msgstr ""
 "Das Plugin benötigt WordPress Version %1$s. Sie verwenden allerdings "
 "lediglich Version %2$s."
 
-#: leavesandlove-wp-plugin-util.php:386
+#: leavesandlove-wp-plugin-util.php:529
 msgid ""
 "The plugin requires PHP version %1$s. However, you are currently using "
 "version %2$s."
@@ -42,42 +65,19 @@ msgstr ""
 "Das Plugin benötigt PHP Version %1$s. Sie verwenden allerdings lediglich "
 "Version %2$s."
 
-#: leavesandlove-wp-plugin-util.php:389
+#: leavesandlove-wp-plugin-util.php:532
 msgid "Please update the above resources to run it."
 msgstr ""
 "Bitte aktualisieren Sie die oben genannten Ressourcen, um es zu verwenden."
 
-#: leavesandlove-wp-plugin-util.php:390 leavesandlove-wp-plugin-util.php:399
+#: leavesandlove-wp-plugin-util.php:533 leavesandlove-wp-plugin-util.php:542
 msgid "The plugin has been deactivated for now."
 msgstr "Das Plugin wurde erst einmal deaktiviert."
 
-#: leavesandlove-wp-plugin-util.php:398
+#: leavesandlove-wp-plugin-util.php:541
 msgid ""
 "The PHP SPL functions can not be found. Please ask your hosting provider to "
 "enable them."
 msgstr ""
 "Die PHP SPL-Funktionen können nicht gefunden werden. Bitten Sie sich Ihren "
 "Hosting-Anbieter, sie zu aktivieren."
-
-#: leavesandlove-wp-plugin-util.php:405
-msgid "This message was added in %1$s version %2$s."
-msgstr "Diese Meldung wurde in %1$s Version %2$s hinzugefügt."
-
-#: leavesandlove-wp-plugin-util.php:406
-msgid "%1$s was called <strong>incorrectly</strong>: %2$s %3$s"
-msgstr "%1$s wurde <strong>fehlerhaft</strong> aufgerufen: %2$s %3$s"
-
-#: leavesandlove-wp-plugin-util.php:413
-msgid ""
-"%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no "
-"alternative available."
-msgstr ""
-"%1$s ist seit %4$s Version %2$s ohne Alternative <strong>veraltet</strong>."
-
-#: leavesandlove-wp-plugin-util.php:415
-msgid ""
-"%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s "
-"instead!"
-msgstr ""
-"%1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. Verwenden Sie "
-"stattdessen %3$s!"
