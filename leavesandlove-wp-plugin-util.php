@@ -9,10 +9,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 	class LaL_WP_Plugin_Util {
 
 		private static $instances = null;
+		private static $basenames = null;
 		private static $autoload_classes = null;
 
 		public static function init() {
 			self::$instances = array();
+			self::$basenames = array();
 			self::$autoload_classes = array();
 
 			self::_load_textdomain();
@@ -24,12 +26,13 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 
 		public static function get( $name, $args = array() ) {
 			if ( ! isset( self::$instances[ $name ] ) ) {
+				$args['slug'] = $name;
 				self::$instances[ $name ] = new self( $args );
 			}
 			return self::$instances[ $name ];
 		}
 
-		public static function is_installed( $plugin_name ) {
+		public static function is_active( $plugin_name ) {
 			return isset( self::$instances[ $plugin_name ] );
 		}
 
@@ -202,6 +205,108 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return $output;
 		}
 
+		public static function _activate( $network_wide = false ) {
+			$slug = str_replace( 'activate_', '', current_action() );
+			$slug = array_search( $slug, self::$basenames );
+
+			if ( $slug ) {
+				if ( $network_wide ) {
+					$blogs = wp_get_sites();
+					foreach ( $blogs as $blog ) {
+						switch_to_blog( $blog['blog_id'] );
+
+						$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+
+						if ( ! isset( $installed[ $slug ] ) ) {
+							$status = apply_filters( $slug . '_install', true );
+
+							if ( $status === true ) {
+								$installed[ $slug ] = true;
+								update_option( 'lalwpplugin_installed_plugins', $installed );
+							}
+						} elseif ( ! $installed[ $slug ] ) {
+							$installed[ $slug ] = true;
+							update_option( 'lalwpplugin_installed_plugins', $installed );
+						}
+
+						$status = apply_filters( $slug . '_activate', true );
+					}
+					self::restore_original_blog();
+				} else {
+					$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+
+					if ( ! isset( $installed[ $slug ] ) ) {
+						$status = apply_filters( $slug . '_install', true );
+
+						if ( $status === true ) {
+							$installed[ $slug ] = false;
+							update_option( 'lalwpplugin_installed_plugins', $installed );
+						}
+					}
+
+					$status = apply_filters( $slug . '_activate', true );
+				}
+			}
+		}
+
+		public static function _deactivate( $network_wide = false ) {
+			$slug = str_replace( 'deactivate_', '', current_action() );
+			$slug = array_search( $slug, self::$basenames );
+
+			if ( $slug ) {
+				if ( $network_wide ) {
+					$blogs = wp_get_sites();
+					foreach ( $blogs as $blog ) {
+						switch_to_blog( $blog['blog_id'] );
+
+						$status = apply_filters( $slug . '_deactivate', true );
+					}
+					self::restore_original_blog();
+				} else {
+					$status = apply_filters( $slug . '_deactivate', true );
+				}
+			}
+		}
+
+		public static function _uninstall() {
+			$slug = str_replace( 'uninstall_', '', current_action() );
+			$slug = array_search( $slug, self::$basenames );
+
+			if ( $slug ) {
+				$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+
+				if ( isset( $installed[ $slug ] ) ) {
+					$network_wide = $installed[ $slug ];
+
+					if ( $network_wide ) {
+						$blogs = wp_get_sites();
+						foreach ( $blogs as $blog ) {
+							switch_to_blog( $blog['blog_id'] );
+
+							$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+
+							if ( isset( $installed[ $slug ] ) ) {
+								$status = apply_filters( $slug . '_uninstall', true );
+
+								if ( $status === true ) {
+									unset( $installed[ $slug ] );
+									update_option( 'lalwpplugin_installed_plugins', $installed );
+								}
+							}
+						}
+						self::restore_original_blog();
+					} else {
+						$status = apply_filters( $slug . '_uninstall', true );
+
+						if ( $status === true ) {
+							unset( $installed[ $slug ] );
+							update_option( 'lalwpplugin_installed_plugins', $installed );
+						}
+					}
+				}
+			}
+		}
+
 		public static function register_autoload_classes( $classes = array() ) {
 			if ( is_array( $classes ) && count( $classes ) > 0 && ! isset( $classes[0] ) ) {
 				self::$autoload_classes = array_merge( self::$autoload_classes, $classes );
@@ -273,7 +378,18 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return 0;
 		}
 
+		public static function restore_original_blog() {
+			if ( empty( $GLOBALS['_wp_switched_stack'] ) ) {
+				return false;
+			}
+
+			$GLOBALS['_wp_switched_stack'] = array( $GLOBALS['_wp_switched_stack'][0] );
+
+			return restore_current_blog();
+		}
+
 		private $args = array(
+			'slug'					=> '',
 			'name'					=> '',
 			'version'				=> '1.0.0',
 			'required_wp'			=> '3.5.0',
@@ -291,7 +407,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 		private function __construct( $args = array() ) {
 			$this->args = wp_parse_args( $args, $this->args );
 
-			if ( empty( $this->args['basename'] ) && ! empty( $this->args['main_file'] ) ) {
+			if ( ! empty( $this->args['main_file'] ) ) {
 				$this->args['basename'] = plugin_basename( $this->args['main_file'] );
 			}
 
@@ -318,6 +434,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 				if ( $this->do_version_check() ) {
 					$running = true;
 					if ( ! defined( 'WP_INSTALLING' ) || WP_INSTALLING === false ) {
+						if ( ! empty( $this->args['slug'] ) && ! empty( $this->args['main_file'] ) ) {
+							self::$basenames[ $this->args['slug'] ] = $this->args['basename'];
+							register_activation_hook( $this->args['main_file'], array( __CLASS__, '_activate' ) );
+							register_deactivation_hook( $this->args['main_file'], array( __CLASS__, '_deactivate' ) );
+							register_uninstall_hook( $this->args['main_file'], array( __CLASS__, '_uninstall' ) );
+						}
 						add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 1 );
 						add_action( 'plugins_loaded', $init_function );
 					}
@@ -374,6 +496,23 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return false;
 		}
 
+		public function doing_it_wrong( $function, $message, $version = '' ) {
+			if ( WP_DEBUG && apply_filters( 'doing_it_wrong_trigger_error', true ) ) {
+				$version = !empty( $version ) ? sprintf( __( 'This message was added in %1$s version %2$s.', 'lalwpplugin' ), '&quot;' . $this->args['name'] . '&quot;', $version ) : '';
+				trigger_error( sprintf( __( '%1$s was called <strong>incorrectly</strong>: %2$s %3$s', 'lalwpplugin' ), $function, $message, $version ) );
+			}
+		}
+
+		public function deprecated_function( $function, $version, $replacement = null ) {
+			if ( WP_DEBUG && apply_filters( 'deprecated_function_trigger_error', true ) ) {
+				if ( $replacement === null ) {
+					trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no alternative available.', 'lalwpplugin' ), $function, $version, '', '&quot;' . $this->args['name'] . '&quot;' ) );
+				} else {
+					trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s instead!', 'lalwpplugin' ), $function, $version, $replacement, '&quot;' . $this->args['name'] . '&quot;' ) );
+				}
+			}
+		}
+
 		public function _display_version_error_notice() {
 			global $wp_version;
 
@@ -402,23 +541,6 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			echo '<p>' . __( 'The PHP SPL functions can not be found. Please ask your hosting provider to enable them.', 'lalwpplugin' ) . '</p>';
 			echo '<p>' . __( 'The plugin has been deactivated for now.', 'lalwpplugin' ) . '</p>';
 			echo '</div>';
-		}
-
-		public function doing_it_wrong( $function, $message, $version = '' ) {
-			if ( WP_DEBUG && apply_filters( 'doing_it_wrong_trigger_error', true ) ) {
-				$version = !empty( $version ) ? sprintf( __( 'This message was added in %1$s version %2$s.', 'lalwpplugin' ), '&quot;' . $this->args['name'] . '&quot;', $version ) : '';
-				trigger_error( sprintf( __( '%1$s was called <strong>incorrectly</strong>: %2$s %3$s', 'lalwpplugin' ), $function, $message, $version ) );
-			}
-		}
-
-		public function deprecated_function( $function, $version, $replacement = null ) {
-			if ( WP_DEBUG && apply_filters( 'deprecated_function_trigger_error', true ) ) {
-				if ( $replacement === null ) {
-					trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no alternative available.', 'lalwpplugin' ), $function, $version, '', '&quot;' . $this->args['name'] . '&quot;' ) );
-				} else {
-					trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s instead!', 'lalwpplugin' ), $function, $version, $replacement, '&quot;' . $this->args['name'] . '&quot;' ) );
-				}
-			}
 		}
 
 	}
