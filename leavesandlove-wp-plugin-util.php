@@ -36,6 +36,14 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return isset( self::$instances[ $plugin_name ] );
 		}
 
+		public static function parse_args( $args, $defaults = array(), $hard = false ) {
+			$args = wp_parse_args( $args, $defaults );
+			if ( $hard ) {
+				$args = array_intersect_key( $args, $defaults );
+			}
+			return $args;
+		}
+
 		public static function format( $value, $type, $mode = 'input', $args = array() ) {
 			$mode = $mode == 'output' ? 'output' : 'input';
 
