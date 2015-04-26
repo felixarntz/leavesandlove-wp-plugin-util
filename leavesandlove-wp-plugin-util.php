@@ -51,11 +51,13 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 
 			switch ( $type ) {
 				case 'string':
-					$formatted = esc_html( $value );
+					if ( $mode == 'output' ) {
+						$formatted = esc_html( $formatted );
+					}
 					break;
 				case 'html':
 					$formatted = wp_kses_post( $value );
-					if ( $mode == 'input' ) {
+					if ( $mode == 'output' ) {
 						$formatted = esc_html( $formatted );
 					}
 					break;
