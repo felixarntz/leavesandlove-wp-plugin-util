@@ -132,7 +132,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 				case 'datetime':
 					$timestamp = $value;
 					if ( ! is_int( $timestamp ) ) {
-						$timestamp = mysql2date( 'U', $timestamp );
+						$timestamp = strtotime( $timestamp );
 					}
 					$format = isset( $args['format'] ) ? $args['format'] : '';
 					if ( empty( $format ) ) {
@@ -146,11 +146,11 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 							}
 						} else {
 							if ( $type == 'date' ) {
-								$format = 'Y-m-d';
+								$format = 'Ymd';
 							} elseif ( $type == 'time' ) {
-								$format = 'H:i:s';
+								$format = 'His';
 							} else {
-								$format = 'Y-m-d H:i:s';
+								$format = 'YmdHis';
 							}
 						}
 					}
