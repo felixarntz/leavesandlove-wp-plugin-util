@@ -1,7 +1,7 @@
 {
   "name": "felixarntz/leavesandlove-wp-plugin-util",
   "description": "Utility class used by Leaves and Love plugins for WordPress.",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "license": "GPL-2.0",
   "keywords": [
     "wordpress"
