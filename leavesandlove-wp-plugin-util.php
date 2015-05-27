@@ -252,21 +252,41 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 						return $response;
 						break;
 					case 'plugin':
+						$package = trim( $package, '/' );
+						$package = explode( '/', $package );
+						$package = $package[0];
+						$args = array(
+							'slug'		=> $package,
+							'fields'	=> array(
+								'sections'		=> false,
+								'tags'			=> false,
+								'banners'		=> false,
+								'reviews'		=> false,
+								'ratings'		=> false,
+								'compatibility'	=> false,
+							),
+						);
 						if ( function_exists( 'plugins_api' ) ) {
-							$package = trim( $package, '/' );
-							$package = explode( '/', $package );
-							$package = $package[0];
-							$response = plugins_api( 'plugin_information', array(
-								'slug'		=> $package,
-								'fields'	=> array(
-									'banners'	=> false,
-									'reviews'	=> false,
+							$response = plugins_api( 'plugin_information', $args );
+						} else {
+							$args = (object) $args;
+
+							$response = wp_remote_post( 'http://api.wordpress.org/plugins/info/1.0/', array(
+								'timeout'		=> 15,
+								'body'			=> array(
+									'action'		=> 'plugin_information',
+									'request'		=> serialize( $args ),
 								),
 							) );
+						}
+						if ( ! is_wp_error( $response ) ) {
+							$response = maybe_unserialize( wp_remote_retrieve_body( $response ) );
 							if ( is_object( $response ) ) {
 								$response = json_decode( json_encode( $response ), true );
 							}
-							return $response;
+							if ( is_array( $response ) ) {
+								return $response;
+							}
 						}
 						break;
 					default:

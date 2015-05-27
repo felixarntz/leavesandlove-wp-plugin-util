@@ -34,7 +34,6 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				self::$initialized = true;
 
-				add_action( 'admin_init', array( __CLASS__, '_deactivate_invalid_plugins' ) );
 				add_action( 'admin_notices', array( __CLASS__, '_display_error_messages' ) );
 			}
 		}
@@ -109,7 +108,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					$check = self::_check_php( $dependencies['phpversion'] );
 					if ( $check !== true ) {
 						self::$errors[ $args['slug'] ]['version_errors'][] = array(
+							'slug'			=> 'php',
 							'name'			=> 'PHP',
+							'type'			=> 'PHP',
 							'requirement'	=> $dependencies['phpversion'],
 							'installed'		=> $check,
 						);
@@ -119,7 +120,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					$check = self::_check_wordpress( $dependencies['wpversion'] );
 					if ( $check !== true ) {
 						self::$errors[ $args['slug'] ]['version_errors'][] = array(
+							'slug'			=> 'wordpress',
 							'name'			=> 'WordPress',
+							'type'			=> 'core',
 							'requirement'	=> $dependencies['wpversion'],
 							'installed'		=> $check,
 						);
@@ -130,18 +133,19 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						$check = self::_check_plugin( $plugin_slug, $version );
 						if ( $check !== true ) {
 							self::$errors[ $args['slug'] ]['version_errors'][] = array(
-								'name'			=> $plugin_slug,
-								'requirement'	=> $version,
-								'installed'		=> $check,
+								'slug'				=> $plugin_slug,
+								'type'				=> 'plugin',
+								'requirement'		=> $version,
+								'installed'			=> $check,
 							);
 							$running = false;
 						}
 					}
 
-					self::$basenames[ $args['slug'] ] = $args['basename'];
-
 					if ( $running ) {
 						unset( self::$errors[ $args['slug'] ] );
+
+						self::$basenames[ $args['slug'] ] = $args['basename'];
 
 						$plugin_path = plugin_dir_path( $args['main_file'] );
 						foreach ( $autoload_files as $file ) {
@@ -171,25 +175,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			return null;
 		}
 
-		public static function _deactivate_invalid_plugins() {
-			if ( is_admin() && current_user_can( 'activate_plugins' ) ) {
-				$deactivate_basenames = array_diff_key( self::$basenames, self::$plugins );
-				foreach ( $deactivate_basenames as $slug => $basename ) {
-					unset( self::$basenames[ $slug ] );
-					deactivate_plugins( $basename );
-					if ( isset( $_GET['activate'] ) ) {
-						unset( $_GET['activate'] );
-					}
-				}
-			}
-		}
-
 		public static function _display_error_messages() {
 			if ( is_admin() && current_user_can( 'activate_plugins' ) ) {
 				foreach ( self::$errors as $slug => $data ) {
 					echo '<div class="error">';
 					echo '<h4>' . sprintf( __( 'Fatal error with plugin %s', 'lalwpplugin' ), '<em>' . $data['name'] . ':</em>' ) . '</h4>';
-					echo '<p>' . __( 'Due to missing dependencies, the plugin has been automatically deactivated.', 'lalwpplugin' ) . '</p>';
+					echo '<p>' . __( 'Due to missing dependencies, the plugin cannot be initialized.', 'lalwpplugin' ) . '</p>';
 					echo '<hr>';
 					if ( count( $data['function_errors'] ) > 0 ) {
 						echo '<p>' . __( 'The following required PHP functions could not be found:', 'lalwpplugin' ) . '</p>';
@@ -204,16 +195,20 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						echo '<p>' . __( 'The following required dependencies are either inactive or outdated:', 'lalwpplugin' ) . '</p>';
 						echo '<ul>';
 						foreach ( $data['version_errors'] as $dependency ) {
+							$dependency = self::_extend_dependency( $dependency );
 							echo '<li>';
 							if ( ! $dependency['installed'] ) {
 								printf( __( '%s could not be found.', 'lalwpplugin' ), $dependency['name'] );
 							} else {
 								printf( __( '%1$s is outdated. You are using version %3$s, but version %2$s is required.', 'lalwpplugin' ), $dependency['name'], $dependency['requirement'], $dependency['installed'] );
 							}
+							if ( ! empty( $dependency['action_link'] ) ) {
+								echo ' <a href="' . $dependency['action_link'] . '" class="button">' . $dependency['action_name'] . '</a>';
+							}
 							echo '</li>';
 						}
 						echo '</ul>';
-						echo '<p>' . __( 'Please install / update and activate the above resources.', 'lalwpplugin' ) . '</p>';
+						echo '<p>' . __( 'Please update the above resources.', 'lalwpplugin' ) . '</p>';
 					}
 					echo '</div>';
 				}
@@ -368,13 +363,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		}
 
 		private static function _check_plugin( $plugin_slug, $version ) {
-			if ( strpos( $plugin_slug, '.php' ) === strlen( $plugin_slug ) - 4 ) {
-				$plugin_slug = substr( $plugin_slug, 0, strlen( $plugin_slug ) - 4 );
-			}
-			if ( strpos( $plugin_slug, '/' ) === false ) {
-				$plugin_slug .= '/' . $plugin_slug;
-			}
-			$plugin_slug .= '.php';
+			$plugin_slug = self::_make_plugin_basename( $plugin_slug );
 
 			if ( ! in_array( $plugin_slug, (array) get_option( 'active_plugins', array() ) ) ) {
 				if ( ! is_multisite() ) {
@@ -387,7 +376,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			}
 
 			if ( ! empty( $version ) ) {
-				$plugin_data = \LaL_WP_Plugin_Util::get_package_data( $plugin_slug, false, false );
+				$plugin_data = \LaL_WP_Plugin_Util::get_package_data( $plugin_slug, 'plugin', false );
 				if ( is_array( $plugin_data ) && isset( $plugin_data['Version'] ) ) {
 					if ( version_compare( $plugin_data['Version'], $version ) < 0 ) {
 						return $plugin_data['Version'];
@@ -396,6 +385,64 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			}
 
 			return true;
+		}
+
+		private static function _make_plugin_basename( $plugin_slug ) {
+			if ( strpos( $plugin_slug, '.php' ) === strlen( $plugin_slug ) - 4 ) {
+				$plugin_slug = substr( $plugin_slug, 0, strlen( $plugin_slug ) - 4 );
+			}
+			if ( strpos( $plugin_slug, '/' ) === false ) {
+				$plugin_slug .= '/' . $plugin_slug;
+			}
+			$plugin_slug .= '.php';
+
+			return $plugin_slug;
+		}
+
+		private static function _extend_dependency( $dependency ) {
+			if ( ! isset( $dependency['name'] ) || empty( $dependency['name'] ) ) {
+				$dependency['name'] = $dependency['slug'];
+			}
+			if ( ! isset( $dependency['action_link'] ) ) {
+				$dependency['action_link'] = '';
+			}
+			if ( ! isset( $dependency['action_name'] ) ) {
+				$dependency['action_name'] = '';
+			}
+
+			switch ( $dependency['type'] ) {
+				case 'plugin':
+					$api_data = \LaL_WP_Plugin_Util::get_package_data( $dependency['slug'], 'plugin', true );
+					if ( is_array( $api_data ) && isset( $api_data['slug'] ) ) {
+						if ( isset( $api_data['name'] ) ) {
+							$dependency['name'] = $api_data['name'];
+						}
+						$plugin_file = self::_make_plugin_basename( $dependency['slug'] );
+						if ( ! $dependency['installed'] ) {
+							if ( is_dir( WP_PLUGIN_DIR . '/' . $api_data['slug'] ) ) {
+								$dependency['action_name'] = __( 'Activate', 'lalwpplugin' );
+								if ( file_exists( WP_PLUGIN_DIR . '/' . $plugin_file ) && current_user_can( 'activate_plugins' ) ) {
+									$dependency['action_link'] = wp_nonce_url( self_admin_url( 'plugins.php?action=activate&plugin=' . $plugin_file . '&plugin_status=all&paged=1' ), 'activate-plugin_' . $plugin_file );
+								}
+							} else {
+								$dependency['action_name'] = __( 'Install', 'lalwpplugin' );
+								if ( current_user_can( 'install_plugins' ) ) {
+									$dependency['action_link'] = wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&plugin=' . $api_data['slug'] ), 'install-plugin_' . $api_data['slug'] );
+								}
+							}
+						} else {
+							$dependency['action_name'] = __( 'Update', 'lalwpplugin' );
+							if ( isset( $api_data['version'] ) && version_compare( $dependency['requirement'], $api_data['version'] ) <= 0 && current_user_can( 'update_plugins' ) ) {
+								$dependency['action_link'] = wp_nonce_url( self_admin_url( 'update.php?action=upgrade-plugin&plugin=' . $plugin_file ), 'upgrade-plugin_' . $plugin_file );
+							}
+						}
+					}
+					break;
+				default:
+					break;
+			}
+
+			return $dependency;
 		}
 
 		private static function _load_textdomain() {
