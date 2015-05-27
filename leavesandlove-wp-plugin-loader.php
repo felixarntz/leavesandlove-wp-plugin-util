@@ -387,7 +387,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			}
 
 			if ( ! empty( $version ) ) {
-				$plugin_data = get_plugin_data( $plugin_slug, false, false );
+				$plugin_data = \LaL_WP_Plugin_Util::get_package_data( $plugin_slug, false, false );
 				if ( is_array( $plugin_data ) && isset( $plugin_data['Version'] ) ) {
 					if ( version_compare( $plugin_data['Version'], $version ) < 0 ) {
 						return $plugin_data['Version'];

@@ -235,6 +235,98 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return 0;
 		}
 
+		public static function get_package_data( $package, $type = 'plugin', $remote = false ) {
+			if ( $remote ) {
+				switch ( $type ) {
+					case 'theme':
+						$response = themes_api( 'theme_information', array(
+							'slug'		=> $package,
+							'fields'	=> array(
+								'sections'	=> false,
+								'tags'		=> false,
+							),
+						) );
+						if ( is_object( $response ) ) {
+							$response = json_decode( json_encode( $response ), true );
+						}
+						return $response;
+						break;
+					case 'plugin':
+						if ( function_exists( 'plugins_api' ) ) {
+							$package = trim( $package, '/' );
+							$package = explode( '/', $package );
+							$package = $package[0];
+							$response = plugins_api( 'plugin_information', array(
+								'slug'		=> $package,
+								'fields'	=> array(
+									'banners'	=> false,
+									'reviews'	=> false,
+								),
+							) );
+							if ( is_object( $response ) ) {
+								$response = json_decode( json_encode( $response ), true );
+							}
+							return $response;
+						}
+						break;
+					default:
+				}
+			} else {
+				switch ( $type ) {
+					case 'theme':
+						$theme = wp_get_theme( $package );
+						if ( $theme->exists() ) {
+							$default_headers = array(
+								'Name' => 'Theme Name',
+								'ThemeURI' => 'Theme URI',
+								'Version' => 'Version',
+								'Description' => 'Description',
+								'Author' => 'Author',
+								'AuthorURI' => 'Author URI',
+								'TextDomain' => 'Text Domain',
+								'DomainPath' => 'Domain Path',
+							);
+							$data = array();
+							foreach ( $default_headers as $header => $name ) {
+								$value = $theme->get( $header );
+								if ( $value ) {
+									$data[ $header ] = $value;
+								}
+							}
+							return $data;
+						}
+						break;
+					case 'plugin':
+						if ( strpos( $package, '.php' ) === strlen( $package ) - 4 ) {
+							$package = substr( $package, 0, strlen( $package ) - 4 );
+						}
+						if ( strpos( $package, '/' ) === false ) {
+							$package .= '/' . $package;
+						}
+						$package .= '.php';
+						if ( function_exists( 'get_plugin_data' ) ) {
+							return get_plugin_data( WP_PLUGIN_DIR . '/' . $package );
+						} else {
+							$default_headers = array(
+								'Name' => 'Plugin Name',
+								'PluginURI' => 'Plugin URI',
+								'Version' => 'Version',
+								'Description' => 'Description',
+								'Author' => 'Author',
+								'AuthorURI' => 'Author URI',
+								'TextDomain' => 'Text Domain',
+								'DomainPath' => 'Domain Path',
+							);
+							return get_file_data( WP_PLUGIN_DIR . '/' . $package, $default_headers, 'plugin' );
+						}
+						break;
+					default:
+				}
+			}
+
+			return null;
+		}
+
 	}
 
 }
