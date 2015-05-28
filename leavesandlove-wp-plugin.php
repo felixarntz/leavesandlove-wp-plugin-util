@@ -64,7 +64,7 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 		}
 
 		public static function get_path( $path = '' ) {
-			return \LaL_WP_Plugin_Util::build_path( plugin_dir_path( static::$_args['main_file'] ), $path );
+			return \LaL_WP_Plugin_Util::build_path( wp_normalize_path( plugin_dir_path( static::$_args['main_file'] ) ), $path );
 		}
 
 		public static function get_url( $path = '' ) {

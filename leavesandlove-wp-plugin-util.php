@@ -162,12 +162,14 @@ if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
 			return $formatted;
 		}
 
-		public static function build_path( $base_path, $path = '' ) {
-			$base_path = untrailingslashit( $base_path );
+		public static function build_path( $base_path, $path = '', $trailing_slash = false ) {
 			if ( ! empty ( $path ) ) {
-				return $base_path . '/' . ltrim( $path, '/\\' );
+				$base_path = path_join( $base_path, $path );
 			}
-			return $base_path;
+			if ( $trailing_slash ) {
+				return trailingslashit( $base_path );
+			}
+			return untrailingslashit( $base_path );
 		}
 
 		public static function make_html_attributes( $atts, $html5 = true, $echo = true ) {
