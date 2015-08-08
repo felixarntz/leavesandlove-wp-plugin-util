@@ -58,11 +58,30 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					'plugins'				=> array(),
 				) );
 
+				// prevent double instantiation of plugin
+				if ( isset( self::$plugins[ $args['slug'] ] ) ) {
+					return false;
+				}
+
 				$running = true;
 
 				if ( ! empty( $args['slug'] ) && ! empty( $args['name'] ) && ! empty( $args['version'] ) && ! empty( $args['main_file'] ) && ! empty( $args['namespace'] ) ) {
 					$args['basename'] = plugin_basename( $args['main_file'] );
-					$args['textdomain_dir'] = dirname( $args['basename'] ) . '/languages/';
+
+					$args['mode'] = 'plugin';
+					if ( substr_count( $args['basename'], '/' ) > 1 ) {
+						$args['mode'] = 'bundled';
+					} elseif ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( WPMU_PLUGIN_DIR ) ) ) {
+						$args['mode'] = 'muplugin';
+					}
+
+					if ( 'bundled' == $args['mode'] ) {
+						$args['textdomain_dir'] = dirname( $args['main_file'] ) . '/languages/';
+					} elseif ( 'muplugin' == $args['mode'] ) {
+						$args['textdomain_dir'] = $args['slug'] . '/languages/';
+					} else {
+						$args['textdomain_dir'] = dirname( $args['basename'] ) . '/languages/';
+					}
 					$args['namespace'] = trim( $args['namespace'], '\\' );
 
 					$autoload_files = $args['autoload_files'];
@@ -148,6 +167,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						self::$basenames[ $args['slug'] ] = $args['basename'];
 
 						$plugin_path = plugin_dir_path( $args['main_file'] );
+						if ( 'muplugin' == $args['mode'] ) {
+							$plugin_path .= $args['slug'] . '/';
+						}
 						foreach ( $autoload_files as $file ) {
 							require_once \LaL_WP_Plugin_Util::build_path( $plugin_path, $file );
 						}
@@ -156,9 +178,11 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						self::$plugins[ $args['slug'] ] = call_user_func( array( $classname, 'instance' ), $args );
 						self::$plugins[ $args['slug'] ]->_maybe_run();
 
-						register_activation_hook( $args['main_file'], array( __CLASS__, '_activate' ) );
-						register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
-						register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
+						if ( 'plugin' == $args['mode'] ) {
+							register_activation_hook( $args['main_file'], array( __CLASS__, '_activate' ) );
+							register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
+							register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
+						}
 					}
 				}
 
@@ -220,6 +244,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			$slug = array_search( $slug, self::$basenames );
 
 			if ( $slug ) {
+				$plugin_class = get_class( self::$plugins[ $slug ] );
 				if ( $network_wide ) {
 					$blogs = wp_get_sites();
 					foreach ( $blogs as $blog ) {
@@ -228,7 +253,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						$installed = get_option( 'lalwpplugin_installed_plugins', array() );
 
 						if ( ! isset( $installed[ $slug ] ) ) {
-							$status = apply_filters( $slug . '_install', true );
+							$status = true;
+							if ( is_callable( array( $plugin_class, 'install' ) ) ) {
+								$status = call_user_func( array( $plugin_class, 'install' ) );
+							}
 
 							if ( $status === true ) {
 								$installed[ $slug ] = true;
@@ -239,14 +267,20 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 							update_option( 'lalwpplugin_installed_plugins', $installed );
 						}
 
-						$status = apply_filters( $slug . '_activate', true );
+						$status = true;
+						if ( is_callable( array( $plugin_class, 'activate' ) ) ) {
+							$status = call_user_func( array( $plugin_class, 'activate' ) );
+						}
 					}
 					self::restore_original_blog();
 				} else {
 					$installed = get_option( 'lalwpplugin_installed_plugins', array() );
 
 					if ( ! isset( $installed[ $slug ] ) ) {
-						$status = apply_filters( $slug . '_install', true );
+						$status = true;
+						if ( is_callable( array( $plugin_class, 'install' ) ) ) {
+							$status = call_user_func( array( $plugin_class, 'install' ) );
+						}
 
 						if ( $status === true ) {
 							$installed[ $slug ] = false;
@@ -254,7 +288,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						}
 					}
 
-					$status = apply_filters( $slug . '_activate', true );
+					$status = true;
+					if ( is_callable( array( $plugin_class, 'activate' ) ) ) {
+						$status = call_user_func( array( $plugin_class, 'activate' ) );
+					}
 				}
 			}
 		}
@@ -264,16 +301,23 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			$slug = array_search( $slug, self::$basenames );
 
 			if ( $slug ) {
+				$plugin_class = get_class( self::$plugins[ $slug ] );
 				if ( $network_wide ) {
 					$blogs = wp_get_sites();
 					foreach ( $blogs as $blog ) {
 						switch_to_blog( $blog['blog_id'] );
 
-						$status = apply_filters( $slug . '_deactivate', true );
+						$status = true;
+						if ( is_callable( array( $plugin_class, 'deactivate' ) ) ) {
+							$status = call_user_func( array( $plugin_class, 'deactivate' ) );
+						}
 					}
 					self::restore_original_blog();
 				} else {
-					$status = apply_filters( $slug . '_deactivate', true );
+					$status = true;
+					if ( is_callable( array( $plugin_class, 'deactivate' ) ) ) {
+						$status = call_user_func( array( $plugin_class, 'deactivate' ) );
+					}
 				}
 			}
 		}
@@ -283,6 +327,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			$slug = array_search( $slug, self::$basenames );
 
 			if ( $slug ) {
+				$plugin_class = get_class( self::$plugins[ $slug ] );
 				$installed = get_option( 'lalwpplugin_installed_plugins', array() );
 
 				if ( isset( $installed[ $slug ] ) ) {
@@ -296,7 +341,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 							$installed = get_option( 'lalwpplugin_installed_plugins', array() );
 
 							if ( isset( $installed[ $slug ] ) ) {
-								$status = apply_filters( $slug . '_uninstall', true );
+								$status = true;
+								if ( is_callable( array( $plugin_class, 'uninstall' ) ) ) {
+									$status = call_user_func( array( $plugin_class, 'uninstall' ) );
+								}
 
 								if ( $status === true ) {
 									unset( $installed[ $slug ] );
@@ -306,7 +354,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						}
 						self::restore_original_blog();
 					} else {
-						$status = apply_filters( $slug . '_uninstall', true );
+						$status = true;
+						if ( is_callable( array( $plugin_class, 'uninstall' ) ) ) {
+							$status = call_user_func( array( $plugin_class, 'uninstall' ) );
+						}
 
 						if ( $status === true ) {
 							unset( $installed[ $slug ] );

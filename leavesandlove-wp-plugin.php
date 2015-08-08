@@ -46,7 +46,14 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 
 		protected function load_textdomain() {
 			if ( ! empty( static::$_args['textdomain'] ) && ! empty( static::$_args['textdomain_dir'] ) ) {
-				return load_plugin_textdomain( static::$_args['textdomain'], false, static::$_args['textdomain_dir'] );
+				if ( 'bundled' == static::$_args['mode'] ) {
+					$locale = apply_filters( 'plugin_locale', get_locale(), static::$_args['textdomain'] );
+					return load_textdomain( static::$_args['textdomain'], static::$_args['textdomain_dir'] . static::$_args['textdomain'] . '-' . $locale . '.mo' );
+				} elseif ( 'muplugin' == static::$_args['mode'] ) {
+					return load_muplugin_textdomain( static::$_args['textdomain'], static::$_args['textdomain_dir'] );
+				} else {
+					return load_plugin_textdomain( static::$_args['textdomain'], false, static::$_args['textdomain_dir'] );
+				}
 			}
 			return false;
 		}
@@ -64,16 +71,24 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 		}
 
 		public static function get_path( $path = '' ) {
-			return \LaL_WP_Plugin_Util::build_path( wp_normalize_path( plugin_dir_path( static::$_args['main_file'] ) ), $path );
+			$file = static::$_args['main_file'];
+			if ( 'muplugin' == static::$_args['mode'] ) {
+				$file = dirname( $file ) . '/' . static::$_args['slug'] . '/composer.json';
+			}
+			return \LaL_WP_Plugin_Util::build_path( plugin_dir_path( $file ), $path );
 		}
 
 		public static function get_url( $path = '' ) {
-			return \LaL_WP_Plugin_Util::build_path( plugin_dir_url( static::$_args['main_file'] ), $path );
+			$file = static::$_args['main_file'];
+			if ( 'muplugin' == static::$_args['mode'] ) {
+				$file = dirname( $file ) . '/' . static::$_args['slug'] . '/composer.json';
+			}
+			return \LaL_WP_Plugin_Util::build_path( plugin_dir_url( $file ), $path );
 		}
 
 		public static function doing_it_wrong( $function, $message, $version = '' ) {
 			if ( WP_DEBUG && apply_filters( 'doing_it_wrong_trigger_error', true ) ) {
-				$version = !empty( $version ) ? sprintf( __( 'This message was added in %1$s version %2$s.', 'lalwpplugin' ), '&quot;' . static::$_args['name'] . '&quot;', $version ) : '';
+				$version = ! empty( $version ) ? sprintf( __( 'This message was added in %1$s version %2$s.', 'lalwpplugin' ), '&quot;' . static::$_args['name'] . '&quot;', $version ) : '';
 				trigger_error( sprintf( __( '%1$s was called <strong>incorrectly</strong>: %2$s %3$s', 'lalwpplugin' ), $function, $message, $version ) );
 			}
 		}
