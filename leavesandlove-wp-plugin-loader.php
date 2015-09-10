@@ -19,6 +19,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		private static $errors = null;
 		private static $autoload_classes = null;
 
+		private static $plugins_queue = array();
+		private static $muplugins_queue = array();
+
 		public static function init() {
 			if ( ! self::$initialized ) {
 				self::$plugins = array();
@@ -34,162 +37,166 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				self::$initialized = true;
 
+				add_action( 'plugins_loaded', array( __CLASS__, '_run_plugins' ) );
+				add_action( 'muplugins_loaded', array( __CLASS__, '_run_muplugins' ) );
 				add_action( 'admin_notices', array( __CLASS__, '_display_error_messages' ) );
 			}
 		}
 
 		public static function load_plugin( $args, $dependencies = array() ) {
-			if ( ! did_action( 'plugins_loaded' ) ) {
-				$args = wp_parse_args( $args, array(
-					'slug'					=> '',
-					'name'					=> '',
-					'version'				=> '1.0.0',
-					'main_file'				=> '',
-					'namespace'				=> '',
-					'textdomain'			=> '',
-					'autoload_files'		=> array(),
-					'autoload_classes'		=> array(),
-				) );
+			$args = wp_parse_args( $args, array(
+				'slug'					=> '',
+				'name'					=> '',
+				'version'				=> '1.0.0',
+				'main_file'				=> '',
+				'namespace'				=> '',
+				'textdomain'			=> '',
+				'autoload_files'		=> array(),
+				'autoload_classes'		=> array(),
+			) );
 
-				$dependencies = wp_parse_args( $dependencies, array(
-					'phpversion'			=> '5.3.0',
-					'wpversion'				=> '3.5.0',
-					'functions'				=> array(),
-					'plugins'				=> array(),
-				) );
+			$dependencies = wp_parse_args( $dependencies, array(
+				'phpversion'			=> '5.3.0',
+				'wpversion'				=> '3.5.0',
+				'functions'				=> array(),
+				'plugins'				=> array(),
+			) );
 
-				// prevent double instantiation of plugin
-				if ( isset( self::$plugins[ $args['slug'] ] ) ) {
-					return false;
-				}
-
-				$running = true;
-
-				if ( ! empty( $args['slug'] ) && ! empty( $args['name'] ) && ! empty( $args['version'] ) && ! empty( $args['main_file'] ) && ! empty( $args['namespace'] ) ) {
-					$args['basename'] = plugin_basename( $args['main_file'] );
-
-					$args['mode'] = 'plugin';
-					if ( substr_count( $args['basename'], '/' ) > 1 ) {
-						$args['mode'] = 'bundled';
-					} elseif ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( WPMU_PLUGIN_DIR ) ) ) {
-						$args['mode'] = 'muplugin';
-					}
-
-					if ( 'bundled' == $args['mode'] ) {
-						$args['textdomain_dir'] = dirname( $args['main_file'] ) . '/languages/';
-					} elseif ( 'muplugin' == $args['mode'] ) {
-						$args['textdomain_dir'] = $args['slug'] . '/languages/';
-					} else {
-						$args['textdomain_dir'] = dirname( $args['basename'] ) . '/languages/';
-					}
-					$args['namespace'] = trim( $args['namespace'], '\\' );
-
-					$autoload_files = $args['autoload_files'];
-
-					if ( count( $args['autoload_classes'] ) > 0 && ! isset( $args['autoload_classes'][0] ) ) {
-						self::$autoload_classes = array_merge( self::$autoload_classes, $args['autoload_classes'] );
-					}
-
-					unset( $args['autoload_files'] );
-					unset( $args['autoload_classes'] );
-
-					if ( ! in_array( 'spl_autoload_register', $dependencies['functions'] ) ) {
-						$dependencies['functions'][] = 'spl_autoload_register';
-					}
-
-					self::$errors[ $args['slug'] ] = array(
-						'name'				=> $args['name'],
-						'function_errors'	=> array(),
-						'version_errors'	=> array(),
-					);
-
-					foreach ( $dependencies['functions'] as $func ) {
-						if ( ! is_callable( $func ) ) {
-							$funcname = '';
-							if ( is_array( $func ) ) {
-								$func = array_values( $func );
-								if ( count( $func ) == 2 ) {
-									if ( is_object( $func[0] ) ) {
-										$func[0] = get_class( $func[0] );
-									}
-									$funcname = implode( '::', $func );
-								} else {
-									$funcname = $func[0];
-								}
-							} else {
-								$funcname = $func;
-							}
-							self::$errors[ $args['slug'] ]['function_errors'][] = $funcname;
-							$running = false;
-						}
-					}
-
-					$check = self::_check_php( $dependencies['phpversion'] );
-					if ( $check !== true ) {
-						self::$errors[ $args['slug'] ]['version_errors'][] = array(
-							'slug'			=> 'php',
-							'name'			=> 'PHP',
-							'type'			=> 'PHP',
-							'requirement'	=> $dependencies['phpversion'],
-							'installed'		=> $check,
-						);
-						$running = false;
-					}
-
-					$check = self::_check_wordpress( $dependencies['wpversion'] );
-					if ( $check !== true ) {
-						self::$errors[ $args['slug'] ]['version_errors'][] = array(
-							'slug'			=> 'wordpress',
-							'name'			=> 'WordPress',
-							'type'			=> 'core',
-							'requirement'	=> $dependencies['wpversion'],
-							'installed'		=> $check,
-						);
-						$running = false;
-					}
-
-					foreach ( $dependencies['plugins'] as $plugin_slug => $version ) {
-						$check = self::_check_plugin( $plugin_slug, $version );
-						if ( $check !== true ) {
-							self::$errors[ $args['slug'] ]['version_errors'][] = array(
-								'slug'				=> $plugin_slug,
-								'type'				=> 'plugin',
-								'requirement'		=> $version,
-								'installed'			=> $check,
-							);
-							$running = false;
-						}
-					}
-
-					if ( $running ) {
-						unset( self::$errors[ $args['slug'] ] );
-
-						self::$basenames[ $args['slug'] ] = $args['basename'];
-
-						$plugin_path = plugin_dir_path( $args['main_file'] );
-						if ( 'muplugin' == $args['mode'] ) {
-							$plugin_path .= $args['slug'] . '/';
-						}
-						foreach ( $autoload_files as $file ) {
-							require_once \LaL_WP_Plugin_Util::build_path( $plugin_path, $file );
-						}
-
-						$classname = $args['namespace'] . '\\App';
-						self::$plugins[ $args['slug'] ] = call_user_func( array( $classname, 'instance' ), $args );
-						self::$plugins[ $args['slug'] ]->_maybe_run();
-
-						if ( 'plugin' == $args['mode'] ) {
-							register_activation_hook( $args['main_file'], array( __CLASS__, '_activate' ) );
-							register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
-							register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
-						}
-					}
-				}
-
-				return $running;
+			// prevent double instantiation of plugin
+			if ( isset( self::$plugins[ $args['slug'] ] ) ) {
+				return false;
 			}
 
-			return false;
+			$running = true;
+
+			if ( ! empty( $args['slug'] ) && ! empty( $args['name'] ) && ! empty( $args['version'] ) && ! empty( $args['main_file'] ) && ! empty( $args['namespace'] ) ) {
+				$args['basename'] = plugin_basename( $args['main_file'] );
+
+				$args['mode'] = 'plugin';
+				if ( substr_count( $args['basename'], '/' ) > 1 ) {
+					$args['mode'] = 'bundled';
+				} elseif ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( WPMU_PLUGIN_DIR ) ) ) {
+					$args['mode'] = 'muplugin';
+				}
+
+				if ( 'bundled' == $args['mode'] ) {
+					$args['textdomain_dir'] = dirname( $args['main_file'] ) . '/languages/';
+				} elseif ( 'muplugin' == $args['mode'] ) {
+					$args['textdomain_dir'] = $args['slug'] . '/languages/';
+				} else {
+					$args['textdomain_dir'] = dirname( $args['basename'] ) . '/languages/';
+				}
+				$args['namespace'] = trim( $args['namespace'], '\\' );
+
+				$autoload_files = $args['autoload_files'];
+
+				if ( count( $args['autoload_classes'] ) > 0 && ! isset( $args['autoload_classes'][0] ) ) {
+					self::$autoload_classes = array_merge( self::$autoload_classes, $args['autoload_classes'] );
+				}
+
+				unset( $args['autoload_files'] );
+				unset( $args['autoload_classes'] );
+
+				if ( ! in_array( 'spl_autoload_register', $dependencies['functions'] ) ) {
+					$dependencies['functions'][] = 'spl_autoload_register';
+				}
+
+				self::$errors[ $args['slug'] ] = array(
+					'name'				=> $args['name'],
+					'function_errors'	=> array(),
+					'version_errors'	=> array(),
+				);
+
+				foreach ( $dependencies['functions'] as $func ) {
+					if ( ! is_callable( $func ) ) {
+						$funcname = '';
+						if ( is_array( $func ) ) {
+							$func = array_values( $func );
+							if ( count( $func ) == 2 ) {
+								if ( is_object( $func[0] ) ) {
+									$func[0] = get_class( $func[0] );
+								}
+								$funcname = implode( '::', $func );
+							} else {
+								$funcname = $func[0];
+							}
+						} else {
+							$funcname = $func;
+						}
+						self::$errors[ $args['slug'] ]['function_errors'][] = $funcname;
+						$running = false;
+					}
+				}
+
+				$check = self::_check_php( $dependencies['phpversion'] );
+				if ( $check !== true ) {
+					self::$errors[ $args['slug'] ]['version_errors'][] = array(
+						'slug'			=> 'php',
+						'name'			=> 'PHP',
+						'type'			=> 'PHP',
+						'requirement'	=> $dependencies['phpversion'],
+						'installed'		=> $check,
+					);
+					$running = false;
+				}
+
+				$check = self::_check_wordpress( $dependencies['wpversion'] );
+				if ( $check !== true ) {
+					self::$errors[ $args['slug'] ]['version_errors'][] = array(
+						'slug'			=> 'wordpress',
+						'name'			=> 'WordPress',
+						'type'			=> 'core',
+						'requirement'	=> $dependencies['wpversion'],
+						'installed'		=> $check,
+					);
+					$running = false;
+				}
+
+				foreach ( $dependencies['plugins'] as $plugin_slug => $version ) {
+					$check = self::_check_plugin( $plugin_slug, $version );
+					if ( $check !== true ) {
+						self::$errors[ $args['slug'] ]['version_errors'][] = array(
+							'slug'				=> $plugin_slug,
+							'type'				=> 'plugin',
+							'requirement'		=> $version,
+							'installed'			=> $check,
+						);
+						$running = false;
+					}
+				}
+
+				if ( $running ) {
+					unset( self::$errors[ $args['slug'] ] );
+
+					self::$basenames[ $args['slug'] ] = $args['basename'];
+
+					$plugin_path = plugin_dir_path( $args['main_file'] );
+					if ( 'muplugin' == $args['mode'] ) {
+						$plugin_path .= $args['slug'] . '/';
+					}
+					foreach ( $autoload_files as $file ) {
+						require_once \LaL_WP_Plugin_Util::build_path( $plugin_path, $file );
+					}
+
+					$classname = $args['namespace'] . '\\App';
+					self::$plugins[ $args['slug'] ] = call_user_func( array( $classname, 'instance' ), $args );
+					if ( 'bundled' == $args['mode'] ) {
+						self::$plugins[ $args['slug'] ]->_maybe_run();
+					} elseif ( 'muplugin' == $args['mode'] ) {
+						self::$muplugins_queue[] = $args['slug'];
+					} else {
+						self::$plugins_queue[] = $args['slug'];
+					}
+
+					if ( 'plugin' == $args['mode'] ) {
+						register_activation_hook( $args['main_file'], array( __CLASS__, '_activate' ) );
+						register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
+						register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
+					}
+				}
+			}
+
+			return $running;
 		}
 
 		public static function get_plugin( $plugin_slug ) {
@@ -197,6 +204,26 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				return self::$plugins[ $plugin_slug ];
 			}
 			return null;
+		}
+
+		public static function _run_plugins() {
+			foreach ( self::$plugins_queue as $slug ) {
+				if ( ! isset( self::$plugins[ $slug ] ) ) {
+					continue;
+				}
+				self::$plugins[ $slug ]->_maybe_run();
+			}
+			self::$plugins_queue = array();
+		}
+
+		public static function _run_muplugins() {
+			foreach ( self::$muplugins_queue as $slug ) {
+				if ( ! isset( self::$plugins[ $slug ] ) ) {
+					continue;
+				}
+				self::$plugins[ $slug ]->_maybe_run();
+			}
+			self::$muplugins_queue = array();
 		}
 
 		public static function _display_error_messages() {
