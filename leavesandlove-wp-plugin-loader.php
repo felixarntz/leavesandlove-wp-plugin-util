@@ -44,6 +44,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		}
 
 		public static function load_plugin( $args, $dependencies = array() ) {
+			if ( ! self::$initialized ) {
+				self::init();
+			}
+
 			$args = wp_parse_args( $args, array(
 				'slug'					=> '',
 				'name'					=> '',
@@ -537,7 +541,5 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		}
 
 	}
-
-	LaL_WP_Plugin_Loader::init();
 
 }
