@@ -179,7 +179,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						$plugin_path .= $args['slug'] . '/';
 					}
 					foreach ( $autoload_files as $file ) {
-						require_once \LaL_WP_Plugin_Util::build_path( $plugin_path, $file );
+						require_once LaL_WP_Plugin_Util::build_path( $plugin_path, $file );
 					}
 
 					$classname = $args['namespace'] . '\\App';
@@ -458,7 +458,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			}
 
 			if ( ! empty( $version ) ) {
-				$plugin_data = \LaL_WP_Plugin_Util::get_package_data( $plugin_slug, 'plugin', false );
+				$plugin_data = LaL_WP_Plugin_Util::get_package_data( $plugin_slug, 'plugin', false );
 				if ( is_array( $plugin_data ) && isset( $plugin_data['Version'] ) ) {
 					if ( version_compare( $plugin_data['Version'], $version ) < 0 ) {
 						return $plugin_data['Version'];
@@ -494,7 +494,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 			switch ( $dependency['type'] ) {
 				case 'plugin':
-					$api_data = \LaL_WP_Plugin_Util::get_package_data( $dependency['slug'], 'plugin', true );
+					$api_data = LaL_WP_Plugin_Util::get_package_data( $dependency['slug'], 'plugin', true );
 					if ( is_array( $api_data ) && isset( $api_data['slug'] ) ) {
 						if ( isset( $api_data['name'] ) ) {
 							$dependency['name'] = $api_data['name'];
