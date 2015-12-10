@@ -17,7 +17,6 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		private static $plugins = null;
 		private static $basenames = null;
 		private static $errors = null;
-		private static $autoload_classes = null;
 
 		private static $plugins_queue = array();
 		private static $muplugins_queue = array();
@@ -27,13 +26,8 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				self::$plugins = array();
 				self::$basenames = array();
 				self::$errors = array();
-				self::$autoload_classes = array();
 
 				self::_load_textdomain();
-
-				if ( function_exists( 'spl_autoload_register' ) ) {
-					spl_autoload_register( array( __CLASS__, '_autoload' ) );
-				}
 
 				self::$initialized = true;
 
@@ -55,13 +49,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				'main_file'				=> '',
 				'namespace'				=> '',
 				'textdomain'			=> '',
-				'autoload_files'		=> array(),
-				'autoload_classes'		=> array(),
+				'use_language_packs'	=> false,
 			) );
 
 			$dependencies = wp_parse_args( $dependencies, array(
-				'phpversion'			=> '5.3.0',
-				'wpversion'				=> '3.5.0',
+				'phpversion'			=> '', // at least 5.3.0
+				'wpversion'				=> '', // at least 3.5.0
 				'functions'				=> array(),
 				'plugins'				=> array(),
 			) );
@@ -78,32 +71,42 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				$args['mode'] = 'plugin';
 				if ( substr_count( $args['basename'], '/' ) > 1 ) {
+					$args['basename'] = basename( $args['main_file'] );
 					$args['mode'] = 'bundled';
+					if ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( get_stylesheet_directory() ) ) ) {
+						$args['mode'] .= '-childtheme';
+					} elseif ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( get_template_directory() ) ) ) {
+						$args['mode'] .= '-theme';
+					} elseif ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( WPMU_PLUGIN_DIR ) ) ) {
+						$args['mode'] .= '-muplugin';
+					} else {
+						$args['mode'] .= '-plugin';
+					}
 				} elseif ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( WPMU_PLUGIN_DIR ) ) ) {
 					$args['mode'] = 'muplugin';
 				}
 
-				if ( 'bundled' == $args['mode'] ) {
-					$args['textdomain_dir'] = dirname( $args['main_file'] ) . '/languages/';
-				} elseif ( 'muplugin' == $args['mode'] ) {
-					$args['textdomain_dir'] = $args['slug'] . '/languages/';
+				if ( $args['use_language_packs'] ) {
+					$args['textdomain_dir'] = '';
 				} else {
-					$args['textdomain_dir'] = dirname( $args['basename'] ) . '/languages/';
+					if ( 0 === strpos( $args['mode'], 'bundled' ) ) {
+						$args['textdomain_dir'] = dirname( $args['main_file'] ) . '/languages/';
+					} elseif ( 'muplugin' === $args['mode'] ) {
+						$args['textdomain_dir'] = $args['slug'] . '/languages/';
+					} else {
+						$args['textdomain_dir'] = dirname( $args['basename'] ) . '/languages/';
+					}
 				}
+
+				if ( empty( $dependencies['phpversion'] ) || version_compare( $dependencies['phpversion'], '5.3.0' ) < 0 ) {
+					$dependencies['phpversion'] = '5.3.0';
+				}
+
+				if ( empty( $dependencies['wpversion'] ) || version_compare( $dependencies['wpversion'], '3.5.0' ) < 0 ) {
+					$dependencies['wpversion'] = '3.5.0';
+				}
+
 				$args['namespace'] = trim( $args['namespace'], '\\' );
-
-				$autoload_files = $args['autoload_files'];
-
-				if ( count( $args['autoload_classes'] ) > 0 && ! isset( $args['autoload_classes'][0] ) ) {
-					self::$autoload_classes = array_merge( self::$autoload_classes, $args['autoload_classes'] );
-				}
-
-				unset( $args['autoload_files'] );
-				unset( $args['autoload_classes'] );
-
-				if ( ! in_array( 'spl_autoload_register', $dependencies['functions'] ) ) {
-					$dependencies['functions'][] = 'spl_autoload_register';
-				}
 
 				self::$errors[ $args['slug'] ] = array(
 					'name'				=> $args['name'],
@@ -116,7 +119,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						$funcname = '';
 						if ( is_array( $func ) ) {
 							$func = array_values( $func );
-							if ( count( $func ) == 2 ) {
+							if ( 2 === count( $func ) ) {
 								if ( is_object( $func[0] ) ) {
 									$func[0] = get_class( $func[0] );
 								}
@@ -137,7 +140,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					self::$errors[ $args['slug'] ]['version_errors'][] = array(
 						'slug'			=> 'php',
 						'name'			=> 'PHP',
-						'type'			=> 'PHP',
+						'type'			=> 'php',
 						'requirement'	=> $dependencies['phpversion'],
 						'installed'		=> $check,
 					);
@@ -174,25 +177,17 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 					self::$basenames[ $args['slug'] ] = $args['basename'];
 
-					$plugin_path = plugin_dir_path( $args['main_file'] );
-					if ( 'muplugin' == $args['mode'] ) {
-						$plugin_path .= $args['slug'] . '/';
-					}
-					foreach ( $autoload_files as $file ) {
-						require_once LaL_WP_Plugin_Util::build_path( $plugin_path, $file );
-					}
-
 					$classname = $args['namespace'] . '\\App';
 					self::$plugins[ $args['slug'] ] = call_user_func( array( $classname, 'instance' ), $args );
-					if ( 'bundled' == $args['mode'] ) {
+					if ( 0 === strpos( $args['mode'], 'bundled' ) ) {
 						self::$plugins[ $args['slug'] ]->_maybe_run();
-					} elseif ( 'muplugin' == $args['mode'] ) {
+					} elseif ( 'muplugin' === $args['mode'] ) {
 						self::$muplugins_queue[] = $args['slug'];
 					} else {
 						self::$plugins_queue[] = $args['slug'];
 					}
 
-					if ( 'plugin' == $args['mode'] ) {
+					if ( 'plugin' === $args['mode'] ) {
 						register_activation_hook( $args['main_file'], array( __CLASS__, '_activate' ) );
 						register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
 						register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
@@ -407,19 +402,6 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			$GLOBALS['_wp_switched_stack'] = array( $GLOBALS['_wp_switched_stack'][0] );
 
 			return restore_current_blog();
-		}
-
-		public static function _autoload( $class_name ) {
-			if ( ! class_exists( $class_name ) ) {
-				$class_name = strtolower( $class_name );
-
-				if ( isset( self::$autoload_classes[ $class_name ] ) ) {
-					require_once self::$autoload_classes[ $class_name ];
-					return true;
-				}
-			}
-
-			return false;
 		}
 
 		private static function _check_php( $version ) {
