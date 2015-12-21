@@ -142,6 +142,26 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 			}
 		}
 
+		public static function deprecated_action( $tag, $version, $replacement = null ) {
+			if ( WP_DEBUG && apply_filters( 'deprecated_action_trigger_error', true ) ) {
+				if ( null === $replacement ) {
+					trigger_error( sprintf( __( 'The action %1$s is <strong>deprecated</strong> as of %4$s version %2$s with no alternative available.', 'lalwpplugin' ), $function, $version, '', '&quot;' . static::$_args['name'] . '&quot;' ) );
+				} else {
+					trigger_error( sprintf( __( 'The action %1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s instead!', 'lalwpplugin' ), $function, $version, $replacement, '&quot;' . static::$_args['name'] . '&quot;' ) );
+				}
+			}
+		}
+
+		public static function deprecated_filter( $tag, $version, $replacement = null ) {
+			if ( WP_DEBUG && apply_filters( 'deprecated_filter_trigger_error', true ) ) {
+				if ( null === $replacement ) {
+					trigger_error( sprintf( __( 'The filter %1$s is <strong>deprecated</strong> as of %4$s version %2$s with no alternative available.', 'lalwpplugin' ), $function, $version, '', '&quot;' . static::$_args['name'] . '&quot;' ) );
+				} else {
+					trigger_error( sprintf( __( 'The filter %1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s instead!', 'lalwpplugin' ), $function, $version, $replacement, '&quot;' . static::$_args['name'] . '&quot;' ) );
+				}
+			}
+		}
+
 		public static function deprecated_argument( $function, $version, $message = null ) {
 			if ( WP_DEBUG && apply_filters( 'deprecated_argument_trigger_error', true ) ) {
 				if ( null === $message ) {
