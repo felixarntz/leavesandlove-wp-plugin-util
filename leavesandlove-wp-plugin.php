@@ -47,7 +47,7 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 		protected function load_textdomain() {
 			if ( ! empty( static::$_args['textdomain'] ) ) {
 				if ( ! empty( static::$_args['textdomain_dir'] ) ) {
-					if ( 0 === strpos( $args['mode'], 'bundled' ) ) {
+					if ( 0 === strpos( static::$_args['mode'], 'bundled' ) ) {
 						$locale = apply_filters( 'plugin_locale', get_locale(), static::$_args['textdomain'] );
 						return load_textdomain( static::$_args['textdomain'], static::$_args['textdomain_dir'] . static::$_args['textdomain'] . '-' . $locale . '.mo' );
 					} elseif ( 'muplugin' === static::$_args['mode'] ) {
@@ -56,7 +56,7 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 						return load_plugin_textdomain( static::$_args['textdomain'], false, static::$_args['textdomain_dir'] );
 					}
 				} else {
-					if ( 0 === strpos( $args['mode'], 'bundled' ) ) {
+					if ( 0 === strpos( static::$_args['mode'], 'bundled' ) ) {
 						$locale = apply_filters( 'plugin_locale', get_locale(), static::$_args['textdomain'] );
 						return load_textdomain( static::$_args['textdomain'], WP_LANG_DIR . '/plugins/' . static::$_args['textdomain'] . '-' . $locale . '.mo' );
 					} elseif ( 'muplugin' === static::$_args['mode'] ) {
