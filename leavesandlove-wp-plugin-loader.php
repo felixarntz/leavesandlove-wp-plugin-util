@@ -266,57 +266,83 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		}
 
 		public static function _activate( $network_wide = false ) {
+			global $wpdb;
+
 			$slug = str_replace( 'activate_', '', current_action() );
 			$slug = array_search( $slug, self::$basenames );
 
 			if ( $slug ) {
 				$plugin_class = get_class( self::$plugins[ $slug ] );
 				if ( $network_wide ) {
+					$installed = get_site_option( 'lalwpplugin_installed_plugins', array() );
+
+					$global_status = true;
+
+					if ( ! isset( $installed[ $slug ] ) || ! $installed[ $slug ] ) {
+						if ( is_callable( array( $plugin_class, 'network_install' ) ) ) {
+							$status = call_user_func( array( $plugin_class, 'network_install' ) );
+							if ( ! $status ) {
+								$global_status = false;
+							}
+						}
+					}
+
+					if ( is_callable( array( $plugin_class, 'network_activate' ) ) ) {
+						$status = call_user_func( array( $plugin_class, 'network_activate' ) );
+					}
+
 					$blogs = wp_get_sites();
 					foreach ( $blogs as $blog ) {
 						switch_to_blog( $blog['blog_id'] );
 
-						$installed = get_option( 'lalwpplugin_installed_plugins', array() );
-
-						if ( ! isset( $installed[ $slug ] ) ) {
-							$status = true;
+						if ( ! isset( $installed[ $slug ] ) || ! $installed[ $slug ] ) {
 							if ( is_callable( array( $plugin_class, 'install' ) ) ) {
 								$status = call_user_func( array( $plugin_class, 'install' ) );
+								if ( ! $status ) {
+									$global_status = false;
+								}
 							}
-
-							if ( $status === true ) {
-								$installed[ $slug ] = true;
-								update_option( 'lalwpplugin_installed_plugins', $installed );
-							}
-						} elseif ( ! $installed[ $slug ] ) {
-							$installed[ $slug ] = true;
-							update_option( 'lalwpplugin_installed_plugins', $installed );
 						}
 
-						$status = true;
 						if ( is_callable( array( $plugin_class, 'activate' ) ) ) {
 							$status = call_user_func( array( $plugin_class, 'activate' ) );
 						}
 					}
 					self::restore_original_blog();
+
+					if ( ! isset( $installed[ $slug ] ) || ! $installed[ $slug ] ) {
+						if ( $global_status ) {
+							$installed[ $slug ] = true;
+						} else {
+							$installed[ $slug ] = false;
+						}
+						update_site_option( 'lalwpplugin_installed_plugins', $installed );
+					}
 				} else {
 					$installed = get_option( 'lalwpplugin_installed_plugins', array() );
 
+					$global_status = true;
+
 					if ( ! isset( $installed[ $slug ] ) ) {
-						$status = true;
 						if ( is_callable( array( $plugin_class, 'install' ) ) ) {
 							$status = call_user_func( array( $plugin_class, 'install' ) );
-						}
-
-						if ( $status === true ) {
-							$installed[ $slug ] = false;
-							update_option( 'lalwpplugin_installed_plugins', $installed );
+							if ( ! $status ) {
+								$global_status = false;
+							}
 						}
 					}
 
-					$status = true;
 					if ( is_callable( array( $plugin_class, 'activate' ) ) ) {
 						$status = call_user_func( array( $plugin_class, 'activate' ) );
+					}
+
+					if ( ! isset( $installed[ $slug ] ) || ! $installed[ $slug ] ) {
+						if ( $global_status ) {
+							$installed[ $slug ] = true;
+						} else {
+							$installed[ $slug ] = false;
+						}
+						update_option( 'lalwpplugin_installed_plugins', $installed );
 					}
 				}
 			}
@@ -329,18 +355,20 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			if ( $slug ) {
 				$plugin_class = get_class( self::$plugins[ $slug ] );
 				if ( $network_wide ) {
+					if ( is_callable( array( $plugin_class, 'network_deactivate' ) ) ) {
+						$status = call_user_func( array( $plugin_class, 'network_deactivate' ) );
+					}
+
 					$blogs = wp_get_sites();
 					foreach ( $blogs as $blog ) {
 						switch_to_blog( $blog['blog_id'] );
 
-						$status = true;
 						if ( is_callable( array( $plugin_class, 'deactivate' ) ) ) {
 							$status = call_user_func( array( $plugin_class, 'deactivate' ) );
 						}
 					}
 					self::restore_original_blog();
 				} else {
-					$status = true;
 					if ( is_callable( array( $plugin_class, 'deactivate' ) ) ) {
 						$status = call_user_func( array( $plugin_class, 'deactivate' ) );
 					}
@@ -354,41 +382,60 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 			if ( $slug ) {
 				$plugin_class = get_class( self::$plugins[ $slug ] );
-				$installed = get_option( 'lalwpplugin_installed_plugins', array() );
 
-				if ( isset( $installed[ $slug ] ) ) {
-					$network_wide = $installed[ $slug ];
+				$installed = array();
+				$network_wide = false;
+				if ( is_multisite() ) {
+					$installed = get_site_option( 'lalwpplugin_installed_plugins', array() );
+					if ( isset( $installed[ $slug ] ) ) {
+						$network_wide = true;
+					} else {
+						$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+					}
+				} else {
+					$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+				}
 
-					if ( $network_wide ) {
+				if ( $network_wide ) {
+					$global_status = true;
+
+					if ( isset( $installed[ $slug ] ) ) {
+						if ( is_callable( array( $plugin_class, 'network_uninstall' ) ) ) {
+							$status = call_user_func( array( $plugin_class, 'network_uninstall' ) );
+							if ( ! $status ) {
+								$global_status = false;
+							}
+						}
+
 						$blogs = wp_get_sites();
 						foreach ( $blogs as $blog ) {
 							switch_to_blog( $blog['blog_id'] );
 
-							$installed = get_option( 'lalwpplugin_installed_plugins', array() );
-
-							if ( isset( $installed[ $slug ] ) ) {
-								$status = true;
-								if ( is_callable( array( $plugin_class, 'uninstall' ) ) ) {
-									$status = call_user_func( array( $plugin_class, 'uninstall' ) );
-								}
-
-								if ( $status === true ) {
-									unset( $installed[ $slug ] );
-									update_option( 'lalwpplugin_installed_plugins', $installed );
+							if ( is_callable( array( $plugin_class, 'uninstall' ) ) ) {
+								$status = call_user_func( array( $plugin_class, 'uninstall' ) );
+								if ( ! $status ) {
+									$global_status = false;
 								}
 							}
 						}
 						self::restore_original_blog();
-					} else {
-						$status = true;
+
+						unset( $installed[ $slug ] );
+						update_site_option( 'lalwpplugin_installed_plugins', $installed );
+					}
+				} else {
+					$global_status = true;
+
+					if ( isset( $installed[ $slug ] ) ) {
 						if ( is_callable( array( $plugin_class, 'uninstall' ) ) ) {
 							$status = call_user_func( array( $plugin_class, 'uninstall' ) );
+							if ( ! $status ) {
+								$global_status = false;
+							}
 						}
 
-						if ( $status === true ) {
-							unset( $installed[ $slug ] );
-							update_option( 'lalwpplugin_installed_plugins', $installed );
-						}
+						unset( $installed[ $slug ] );
+						update_option( 'lalwpplugin_installed_plugins', $installed );
 					}
 				}
 			}
