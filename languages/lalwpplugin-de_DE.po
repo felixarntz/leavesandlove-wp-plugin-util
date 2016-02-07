@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: leaves-wp-plugin-util\n"
 "Report-Msgid-Bugs-To: http://leaves-and-love.net\n"
-"POT-Creation-Date: 2015-12-21 17:11:06+00:00\n"
-"PO-Revision-Date: 2015-12-21 18:11+0100\n"
+"POT-Creation-Date: 2016-02-07 13:57:03+00:00\n"
+"PO-Revision-Date: 2016-02-07 14:57+0100\n"
 "Last-Translator: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language-Team: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language: de_DE\n"
@@ -66,15 +66,15 @@ msgstr ""
 msgid "Please update the above resources."
 msgstr "Bitte aktualisieren Sie die oben genannten Ressourcen."
 
-#: leavesandlove-wp-plugin-loader.php:487
+#: leavesandlove-wp-plugin-loader.php:534
 msgid "Activate"
 msgstr "Aktivieren"
 
-#: leavesandlove-wp-plugin-loader.php:492
+#: leavesandlove-wp-plugin-loader.php:539
 msgid "Install"
 msgstr "Installieren"
 
-#: leavesandlove-wp-plugin-loader.php:498
+#: leavesandlove-wp-plugin-loader.php:545
 msgid "Update"
 msgstr "Aktualisieren"
 
