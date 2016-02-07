@@ -34,6 +34,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				add_action( 'plugins_loaded', array( __CLASS__, '_run_plugins' ) );
 				add_action( 'muplugins_loaded', array( __CLASS__, '_run_muplugins' ) );
 				add_action( 'admin_notices', array( __CLASS__, '_display_error_messages' ) );
+				add_action( 'network_admin_notices', array( __CLASS__, '_display_error_messages' ) );
 			}
 		}
 
