@@ -199,8 +199,8 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
 						register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
 
-						add_filter( 'plugin_action_links_' . plugin_basename( $args['main_file'], '_filter_action_links' ) );
-						add_filter( 'network_admin_plugin_action_links_' . plugin_basename( $args['main_file'], '_filter_network_action_links' ) );
+						add_filter( 'plugin_action_links_' . plugin_basename( $args['main_file'] ), array( __CLASS__, '_filter_action_links' ) );
+						add_filter( 'network_admin_plugin_action_links_' . plugin_basename( $args['main_file'] ), array( __CLASS__, '_filter_network_action_links' ) );
 					}
 				}
 			}
