@@ -33,8 +33,14 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				add_action( 'plugins_loaded', array( __CLASS__, '_run_plugins' ) );
 				add_action( 'muplugins_loaded', array( __CLASS__, '_run_muplugins' ) );
+
 				add_action( 'admin_notices', array( __CLASS__, '_display_error_messages' ) );
 				add_action( 'network_admin_notices', array( __CLASS__, '_display_error_messages' ) );
+
+				add_action( 'admin_notices', array( __CLASS__, '_display_status_messages' ) );
+				add_action( 'network_admin_notices', array( __CLASS__, '_display_status_messages' ) );
+
+				add_action( 'wp_ajax_lalwpplugin_dismiss_notice', array( __CLASS__, '_ajax_dismiss_notice' ) );
 			}
 		}
 
@@ -61,7 +67,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			) );
 
 			// prevent double instantiation of plugin
-			if ( isset( self::$plugins[ $args['slug'] ] ) ) {
+			if ( isset( self::$plugins[ $args['slug'] ] ) || isset( self::$errors[ $args['slug'] ] ) ) {
 				return false;
 			}
 
@@ -192,6 +198,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						register_activation_hook( $args['main_file'], array( __CLASS__, '_activate' ) );
 						register_deactivation_hook( $args['main_file'], array( __CLASS__, '_deactivate' ) );
 						register_uninstall_hook( $args['main_file'], array( __CLASS__, '_uninstall' ) );
+
+						add_filter( 'plugin_action_links_' . plugin_basename( $args['main_file'], '_filter_action_links' ) );
+						add_filter( 'network_admin_plugin_action_links_' . plugin_basename( $args['main_file'], '_filter_network_action_links' ) );
 					}
 				}
 			}
@@ -227,7 +236,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		}
 
 		public static function _display_error_messages() {
-			if ( is_admin() && current_user_can( 'activate_plugins' ) ) {
+			if ( current_user_can( 'activate_plugins' ) ) {
 				foreach ( self::$errors as $slug => $data ) {
 					echo '<div class="error">';
 					echo '<h4>' . sprintf( __( 'Fatal error with plugin %s', 'lalwpplugin' ), '<em>' . $data['name'] . ':</em>' ) . '</h4>';
@@ -266,6 +275,98 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			}
 		}
 
+		public static function _display_status_messages() {
+			if ( is_network_admin() ) {
+				$settings = get_site_option( 'lalwpplugin_status_messages', array() );
+				$permission = 'manage_network_options';
+				$funcname = 'render_network_status_message';
+			} else {
+				$settings = get_option( 'lalwpplugin_status_messages', array() );
+				$permission = 'manage_options';
+				$funcname = 'render_status_message';
+			}
+
+			if ( ! $settings || ! current_user_can( $permission ) ) {
+				return;
+			}
+
+			?>
+			<script type="text/javascript">
+				jQuery( document ).ready( function( $ ) {
+					$( document ).on( 'click', '.lalwpplugin-notice .notice-dismiss', function( e ) {
+						var id = $( this ).parents( '.lalwpplugin-notice' ).attr( 'id' ).replace( '-notice', '' );
+						if ( ! id ) {
+							return;
+						}
+						$.ajax( '<?php echo admin_url( "admin-ajax.php" ); ?>', {
+							data: {
+								action: 'lalwpplugin_dismiss_notice',
+								plugin: id,
+								context: '<?php echo is_network_admin() ? "network" : "site"; ?>'
+							},
+							dataType: 'json',
+							method: 'POST'
+						});
+					});
+				});
+			</script>
+			<?php
+
+			foreach ( self::$plugins as $slug => $obj ) {
+				$plugin_class = get_class( $obj );
+				if ( ! is_callable( array( $plugin_class, $funcname ) ) ) {
+					continue;
+				}
+				if ( ! isset( $settings[ $slug ] ) ) {
+					continue;
+				}
+				?>
+				<div id="<?php echo $slug; ?>-notice" class="lalwpplugin-notice notice updated is-dismissible hide-if-no-js">
+					<?php call_user_func( array( $plugin_class, $funcname ), $settings[ $slug ] ); ?>
+				</div>
+				<?php
+				if ( 'activated' === $settings[ $slug ] ) {
+					$settings[ $slug ] = 'active';
+				}
+			}
+
+			if ( is_network_admin() ) {
+				update_site_option( 'lalwpplugin_status_messages', $settings );
+			} else {
+				update_option( 'lalwpplugin_status_messages', $settings );
+			}
+		}
+
+		public static function _ajax_dismiss_notice() {
+			if ( ! isset( $_REQUEST['plugin'] ) ) {
+				wp_send_json_error();
+			}
+
+			if ( isset( $_REQUEST['context'] ) && 'network' === $_REQUEST['context'] ) {
+				$settings = get_site_option( 'lalwpplugin_status_messages', array() );
+				if ( isset( $settings[ $_REQUEST['plugin'] ] ) ) {
+					unset( $settings[ $_REQUEST['plugin'] ] );
+				}
+				if ( ! $settings ) {
+					delete_site_option( 'lalwpplugin_status_messages' );
+				} else {
+					update_site_option( 'lalwpplugin_status_messages', $settings );
+				}
+			} else {
+				$settings = get_option( 'lalwpplugin_status_messages', array() );
+				if ( isset( $settings[ $_REQUEST['plugin'] ] ) ) {
+					unset( $settings[ $_REQUEST['plugin'] ] );
+				}
+				if ( ! $settings ) {
+					delete_option( 'lalwpplugin_status_messages' );
+				} else {
+					update_option( 'lalwpplugin_status_messages', $settings );
+				}
+			}
+
+			wp_send_json_success();
+		}
+
 		public static function _activate( $network_wide = false ) {
 			global $wpdb;
 
@@ -276,6 +377,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				$plugin_class = get_class( self::$plugins[ $slug ] );
 				if ( $network_wide ) {
 					$installed = get_site_option( 'lalwpplugin_installed_plugins', array() );
+					$settings = get_site_option( 'lalwpplugin_status_messages', array() );
 
 					$global_status = true;
 
@@ -319,8 +421,14 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 						}
 						update_site_option( 'lalwpplugin_installed_plugins', $installed );
 					}
+
+					if ( is_callable( array( $plugin_class, 'render_network_status_message' ) ) ) {
+						$settings[ $slug ] = 'activated';
+						update_site_option( 'lalwpplugin_status_messages', $settings );
+					}
 				} else {
 					$installed = get_option( 'lalwpplugin_installed_plugins', array() );
+					$settings = get_option( 'lalwpplugin_status_messages', array() );
 
 					$global_status = true;
 
@@ -344,6 +452,11 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 							$installed[ $slug ] = false;
 						}
 						update_option( 'lalwpplugin_installed_plugins', $installed );
+					}
+
+					if ( is_callable( array( $plugin_class, 'render_status_message' ) ) ) {
+						$settings[ $slug ] = 'activated';
+						update_option( 'lalwpplugin_status_messages', $settings );
 					}
 				}
 			}
@@ -440,6 +553,18 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					}
 				}
 			}
+		}
+
+		public static function _filter_action_links( $links ) {
+			$slug = current_filter();
+			//TODO
+			return $links;
+		}
+
+		public static function _filter_network_action_links( $links ) {
+			$slug = current_filter();
+			//TODO
+			return $links;
 		}
 
 		public static function restore_original_blog() {
