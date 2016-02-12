@@ -15,7 +15,7 @@ Features
 * fail gracefully if any of the required dependencies are not met and show a helpful admin notice
 * show plugin installation / activation / update links for plugin dependencies that are not met
 * easily handle plugin installation, uninstallation, activation and deactivation by simply providing one method for each (optional) - it is automatically multisite-compatible
-* allow the plugin to be used as a regular plugin, a must-use plugin or bundled as a library inside another plugin, must-use plugin or theme
+* allow the plugin to be used as a regular plugin, a must-use plugin or (if you provide an `is_library` argument with value `true`) even bundled as a library inside another plugin, must-use plugin or theme
 * automatically handle textdomain loading, whether you use local .po files or wordpress.org language packs
 * show a (permanently dismissible) status message in the admin when the plugin is activated (optional)
 * easily add custom links to the plugin's row in the plugins list table (optional)
@@ -36,7 +36,7 @@ Your plugin itself must:
 Getting Started
 ---------------
 
-To use the library, first add it to your project by adding it to your composer.json (`composer require felixarntz/leavesandlove-wp-plugin-util:2.0.0`). The library uses autoloading to load its classes. It is recommended that you also use autoloading with your plugin's own files.
+To use the library, first add it to your project by adding it to your composer.json (`composer require felixarntz/leavesandlove-wp-plugin-util:2.0.1`). The library uses autoloading to load its classes. It is recommended that you also use autoloading with your plugin's own files.
 
 Your plugin must have a main initialization class which is called `App` and resides in your plugin's root namespace (do not put this class in the actual plugin main file!). This main class must extend the `LaL_WP_Plugin` class bundled in this library. For more information on how to extend this class, please check out [it's PHPDoc block](https://github.com/felixarntz/leavesandlove-wp-plugin-util/blob/master/leavesandlove-wp-plugin.php#L13). See a little bit further below for a basic example of what that class could look like.
 
@@ -56,24 +56,19 @@ License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: my-plugin
 */
 
-// the following if clause requires the autoloader file (if the class is not yet available)
-if ( ! class_exists( 'MyPluginNamespace\App' ) ) {
+if ( version_compare( phpversion(), '5.3.0' ) >= 0 && ! class_exists( 'MyPluginNamespace\App' ) ) {
+  // load the PHP autoloader...
   if ( file_exists( dirname( __FILE__ ) . '/my-plugin/vendor/autoload.php' ) ) {
-    // this path would be the case in a must-use plugin where the main file is above the actual plugin directory
-    if ( version_compare( phpversion(), '5.3.0' ) >= 0 ) {
-      // only use the autoloader if we have PHP 5.3
-      require_once dirname( __FILE__ ) . '/my-plugin/vendor/autoload.php';
-    } else {
-      require_once dirname( __FILE__ ) . '/my-plugin/vendor/felixarntz/leavesandlove-wp-plugin-util/leavesandlove-wp-plugin-loader.php';
-    }
+    require_once dirname( __FILE__ ) . '/my-plugin/vendor/autoload.php';
   } elseif ( file_exists( dirname( __FILE__ ) . '/vendor/autoload.php' ) ) {
-    // for a regular plugin or other kind of dependency
-    if ( version_compare( phpversion(), '5.3.0' ) >= 0 ) {
-      // only use the autoloader if we have PHP 5.3
-      require_once dirname( __FILE__ ) . '/vendor/autoload.php';
-    } else {
-      require_once dirname( __FILE__ ) . '/vendor/felixarntz/leavesandlove-wp-plugin-util/leavesandlove-wp-plugin-loader.php';
-    }
+    require_once dirname( __FILE__ ) . '/vendor/autoload.php';
+  }
+} elseif ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
+  // ...or load the plugin loader class itself
+  if ( file_exists( dirname( __FILE__ ) . '/my-plugin/vendor/felixarntz/leavesandlove-wp-plugin-util/leavesandlove-wp-plugin-loader.php' ) ) {
+    require_once dirname( __FILE__ ) . '/my-plugin/vendor/felixarntz/leavesandlove-wp-plugin-util/leavesandlove-wp-plugin-loader.php';
+  } elseif ( file_exists( dirname( __FILE__ ) . '/vendor/felixarntz/leavesandlove-wp-plugin-util/leavesandlove-wp-plugin-loader.php' ) ) {
+    require_once dirname( __FILE__ ) . '/vendor/felixarntz/leavesandlove-wp-plugin-util/leavesandlove-wp-plugin-loader.php';
   }
 }
 
@@ -92,7 +87,7 @@ LaL_WP_Plugin_Loader::load_plugin( array(
 ) );
 ```
 
-The above code is all that you should include in your plugin's main file. In case you already wondered: You must not wrap any of the code into a `plugins_loaded` function - the plugin loader handles that for you. For an overview of how to leverage the advanced initialization methods, please check out [the plugin loader class' PHPDoc block](https://github.com/felixarntz/leavesandlove-wp-plugin-util/blob/master/leavesandlove-wp-plugin-loader.php#L72).
+The above code is all that you should include in your plugin's main file. In case you already wondered: You must not wrap any of the code into a `plugins_loaded` function - the plugin loader handles that for you. For an overview of how to leverage the advanced initialization methods, please check out [the plugin loader class' PHPDoc block](https://github.com/felixarntz/leavesandlove-wp-plugin-util/blob/master/leavesandlove-wp-plugin-loader.php#L82).
 
 Based on the above example, the following is the absolute minimal code that your main class should have:
 

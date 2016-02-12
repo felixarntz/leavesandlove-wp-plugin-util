@@ -1,10 +1,10 @@
 # Copyright (c) 2014-2015 Felix Arntz
 msgid ""
 msgstr ""
-"Project-Id-Version: leaves-wp-plugin-util 2.0.0\n"
+"Project-Id-Version: leaves-wp-plugin-util 2.0.1\n"
 "Report-Msgid-Bugs-To: http://leaves-and-love.net\n"
-"POT-Creation-Date: 2016-02-12 01:15:27+00:00\n"
-"PO-Revision-Date: 2016-02-12 02:24+0100\n"
+"POT-Creation-Date: 2016-02-12 06:45:18+00:00\n"
+"PO-Revision-Date: 2016-02-12 07:45+0100\n"
 "Last-Translator: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language-Team: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language: de_DE\n"
@@ -22,20 +22,20 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: leavesandlove-wp-plugin-loader.php:718
+#: leavesandlove-wp-plugin-loader.php:738
 msgid "Fatal error with plugin %s"
 msgstr "Schwerwiegender Fehler bei Plugin %s"
 
-#: leavesandlove-wp-plugin-loader.php:719
+#: leavesandlove-wp-plugin-loader.php:739
 msgid "Due to missing dependencies, the plugin cannot be initialized."
 msgstr ""
 "Aufgrund fehlender Abhängigkeiten kann das Plugin nicht initialisiert werden."
 
-#: leavesandlove-wp-plugin-loader.php:722
+#: leavesandlove-wp-plugin-loader.php:742
 msgid "The following required PHP functions could not be found:"
 msgstr "Die folgenden benötigten PHP-Funktionen konnten nicht gefunden werden:"
 
-#: leavesandlove-wp-plugin-loader.php:728
+#: leavesandlove-wp-plugin-loader.php:748
 msgid ""
 "There are probably some PHP extensions missing, or you might be using an "
 "outdated version of PHP. If you do not know how to fix this, please ask your "
@@ -45,23 +45,23 @@ msgstr ""
 "verwendest eventuell eine veraltete Version von PHP. Wenn du nicht weißt, "
 "wie du dieses Problem beheben kannst, wende dich an deinen Hosting-Anbieter."
 
-#: leavesandlove-wp-plugin-loader.php:731
+#: leavesandlove-wp-plugin-loader.php:751
 msgid "The following required dependencies are either inactive or outdated:"
 msgstr ""
 "Die folgenden benötigten Abhängigkeiten sind entweder inaktiv oder veraltet:"
 
-#: leavesandlove-wp-plugin-loader.php:737
+#: leavesandlove-wp-plugin-loader.php:757
 msgid "%s could not be found."
 msgstr "%s konnte nicht gefunden werden."
 
-#: leavesandlove-wp-plugin-loader.php:739
+#: leavesandlove-wp-plugin-loader.php:759
 msgid ""
 "%s is active sitewide, but it must be activated across the entire network."
 msgstr ""
 "%s ist auf einer einzelnen Website aktiv, es muss jedoch im gesamten "
 "Netzwerk aktiviert sein."
 
-#: leavesandlove-wp-plugin-loader.php:741
+#: leavesandlove-wp-plugin-loader.php:761
 msgid ""
 "%1$s is outdated. You are using version %3$s, but version %2$s is required. "
 "Since this is a must-use plugin, you need to update it manually."
@@ -70,34 +70,34 @@ msgstr ""
 "benötigt. Da es sich um ein obligatorisches Plugin handelt, musst du es "
 "manuell aktualisieren."
 
-#: leavesandlove-wp-plugin-loader.php:743
+#: leavesandlove-wp-plugin-loader.php:763
 msgid ""
 "%1$s is outdated. You are using version %3$s, but version %2$s is required."
 msgstr ""
 "%1$s ist veraltet. Du verwendest Version %3$s, allerdings wird Version %2$s "
 "benötigt."
 
-#: leavesandlove-wp-plugin-loader.php:751
+#: leavesandlove-wp-plugin-loader.php:771
 msgid "Please update the above resources."
 msgstr "Bitte aktualisiere die oben genannten Ressourcen."
 
-#: leavesandlove-wp-plugin-loader.php:926
+#: leavesandlove-wp-plugin-loader.php:946
 msgid "Missing request field %s."
 msgstr "Fehlendes Feld %s in der Anfrage."
 
-#: leavesandlove-wp-plugin-loader.php:948
+#: leavesandlove-wp-plugin-loader.php:968
 msgid "Missing capabilities."
 msgstr "Unzureichende Befugnisse."
 
-#: leavesandlove-wp-plugin-loader.php:953
+#: leavesandlove-wp-plugin-loader.php:973
 msgid "Notice for plugin %s has already been dismissed."
 msgstr "Mitteilung für Plugin %s wurde bereits ausgeblendet."
 
-#: leavesandlove-wp-plugin-loader.php:960
+#: leavesandlove-wp-plugin-loader.php:980
 msgid "Notice for plugin %s dismissed."
 msgstr "Mitteilung für Plugin %s ausgeblendet."
 
-#: leavesandlove-wp-plugin-loader.php:971
+#: leavesandlove-wp-plugin-loader.php:991
 msgid "Error: Missing dependencies!"
 msgstr "Fehler: Fehlende Abhängigkeiten!"
 

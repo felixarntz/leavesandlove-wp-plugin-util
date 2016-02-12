@@ -34,6 +34,16 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 	final class LaL_WP_Plugin_Loader {
 
 		/**
+		 * Required PHP version
+		 */
+		const REQUIRED_PHP = '5.3.0';
+
+		/**
+		 * Required WordPress version
+		 */
+		const REQUIRED_WP = '3.5.0';
+
+		/**
 		 * @since 1.5.0
 		 * @var boolean Stores whether the plugin loader has been initialized yet.
 		 */
@@ -91,6 +101,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		 * The `$args` array may also contain the following keys:
 		 * * `textdomain`: the textdomain of the plugin (default is empty for no textdomain)
 		 * * `use_language_packs`: boolean to indicate whether the plugin should use wordpress.org language packs for its translations
+		 * * `is_library`: boolean to indicate whether the plugin is a library plugin; this will allow other plugins and themes to bundle it
 		 *
 		 * The `LaL_WP_Plugin` base class will automatically load the plugin textdomain for you
 		 * so you should not load it manually.
@@ -133,11 +144,12 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				'namespace'				=> '',
 				'textdomain'			=> '',
 				'use_language_packs'	=> false,
+				'is_library'			=> false,
 			) );
 
 			$dependencies = wp_parse_args( $dependencies, array(
-				'phpversion'			=> '', // at least 5.3.0
-				'wpversion'				=> '', // at least 3.5.0
+				'phpversion'			=> '',
+				'wpversion'				=> '',
 				'functions'				=> array(),
 				'plugins'				=> array(),
 			) );
@@ -160,6 +172,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			// detect plugin mode
 			$args['basename'] = plugin_basename( $args['main_file'] );
 			if ( substr_count( $args['basename'], '/' ) > 1 ) {
+				// only allow bundled plugin if it is a library
+				if ( ! $args['is_library'] ) {
+					return false;
+				}
 				$args['mode'] = 'bundled';
 				if ( 0 === strpos( wp_normalize_path( $args['main_file'] ), wp_normalize_path( get_stylesheet_directory() ) ) ) {
 					$args['mode'] .= '-childtheme';
@@ -192,8 +208,8 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 			// set base dependencies
 			$base_dependencies = array(
-				'phpversion'	=> '5.3.0',
-				'wpversion'		=> '3.5.0',
+				'phpversion'	=> self::REQUIRED_PHP,
+				'wpversion'		=> self::REQUIRED_WP,
 			);
 			foreach ( $base_dependencies as $type => $value ) {
 				if ( empty( $dependencies[ $type ] ) || version_compare( $dependencies[ $type ], $value ) < 0 ) {
@@ -280,6 +296,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			// if everything is fine, remove the errors array and store the plugin main class instance
 			if ( $running ) {
 				unset( self::$errors[ $args['slug'] ] );
+
+				if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
+					require_once dirname( __FILE__ ) . '/leavesandlove-wp-plugin.php';
+				}
 
 				$classname = $args['namespace'] . '\\App';
 				self::$plugins[ $args['slug'] ] = call_user_func( array( $classname, 'instance' ), $args );
@@ -1236,6 +1256,10 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 		 * @since 1.5.0
 		 */
 		private static function _init() {
+			if ( ! class_exists( 'LaL_WP_Plugin_Util' ) ) {
+				require_once dirname( __FILE__ ) . '/leavesandlove-wp-plugin-util.php';
+			}
+
 			self::_load_textdomain();
 
 			add_action( 'plugins_loaded', array( __CLASS__, '_run_plugins' ) );

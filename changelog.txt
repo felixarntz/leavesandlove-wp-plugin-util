@@ -1,4 +1,8 @@
 == Changelog ==
 
+= 2.0.1 =
+* Added `is_library` arg
+* Fixed possible fatal error on PHP 5.2
+
 = 2.0.0 =
 * First public release
