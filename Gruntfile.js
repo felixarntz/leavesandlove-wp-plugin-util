@@ -14,7 +14,7 @@ module.exports = function(grunt) {
 					potHeaders: {
 						'language-team': '<%= pkg.author.name %> <<%= pkg.author.email %>>',
 						'last-translator': '<%= pkg.author.name %> <<%= pkg.author.email %>>',
-						'project-id-version': 'leavesandlove-wp-plugin-util',
+						'project-id-version': 'leavesandlove-wp-plugin-util <%= pkg.version %>',
 						'report-msgid-bugs-to': '<%= pkg.author.url %>',
 						'x-generator': 'grunt-wp-i18n 0.5.3',
 						'x-poedit-basepath': '.',

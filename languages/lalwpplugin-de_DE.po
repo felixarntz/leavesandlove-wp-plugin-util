@@ -1,10 +1,10 @@
 # Copyright (c) 2014-2015 Felix Arntz
 msgid ""
 msgstr ""
-"Project-Id-Version: leaves-wp-plugin-util\n"
+"Project-Id-Version: leaves-wp-plugin-util 2.0.0\n"
 "Report-Msgid-Bugs-To: http://leaves-and-love.net\n"
-"POT-Creation-Date: 2016-02-07 14:02:10+00:00\n"
-"PO-Revision-Date: 2016-02-07 15:02+0100\n"
+"POT-Creation-Date: 2016-02-12 01:15:27+00:00\n"
+"PO-Revision-Date: 2016-02-12 02:24+0100\n"
 "Last-Translator: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language-Team: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language: de_DE\n"
@@ -22,78 +22,117 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: leavesandlove-wp-plugin-loader.php:233
+#: leavesandlove-wp-plugin-loader.php:718
 msgid "Fatal error with plugin %s"
 msgstr "Schwerwiegender Fehler bei Plugin %s"
 
-#: leavesandlove-wp-plugin-loader.php:234
+#: leavesandlove-wp-plugin-loader.php:719
 msgid "Due to missing dependencies, the plugin cannot be initialized."
 msgstr ""
 "Aufgrund fehlender Abhängigkeiten kann das Plugin nicht initialisiert werden."
 
-#: leavesandlove-wp-plugin-loader.php:237
+#: leavesandlove-wp-plugin-loader.php:722
 msgid "The following required PHP functions could not be found:"
 msgstr "Die folgenden benötigten PHP-Funktionen konnten nicht gefunden werden:"
 
-#: leavesandlove-wp-plugin-loader.php:243
+#: leavesandlove-wp-plugin-loader.php:728
 msgid ""
 "There are probably some PHP extensions missing, or you might be using an "
 "outdated version of PHP. If you do not know how to fix this, please ask your "
 "hosting provider."
 msgstr ""
-"Wahrscheinlich sind einige PHP-Extensions nicht aktiviert, oder Sie "
-"verwenden eventuell eine veraltete Version von PHP. Wenn Sie nicht wissen, "
-"wie Sie dieses Problem beheben können, wenden Sie sich an Ihren Hosting-"
-"Anbieter."
+"Wahrscheinlich sind einige PHP-Extensions nicht aktiviert, oder du "
+"verwendest eventuell eine veraltete Version von PHP. Wenn du nicht weißt, "
+"wie du dieses Problem beheben kannst, wende dich an deinen Hosting-Anbieter."
 
-#: leavesandlove-wp-plugin-loader.php:246
+#: leavesandlove-wp-plugin-loader.php:731
 msgid "The following required dependencies are either inactive or outdated:"
 msgstr ""
 "Die folgenden benötigten Abhängigkeiten sind entweder inaktiv oder veraltet:"
 
-#: leavesandlove-wp-plugin-loader.php:252
+#: leavesandlove-wp-plugin-loader.php:737
 msgid "%s could not be found."
 msgstr "%s konnte nicht gefunden werden."
 
-#: leavesandlove-wp-plugin-loader.php:254
+#: leavesandlove-wp-plugin-loader.php:739
+msgid ""
+"%s is active sitewide, but it must be activated across the entire network."
+msgstr ""
+"%s ist auf einer einzelnen Website aktiv, es muss jedoch im gesamten "
+"Netzwerk aktiviert sein."
+
+#: leavesandlove-wp-plugin-loader.php:741
+msgid ""
+"%1$s is outdated. You are using version %3$s, but version %2$s is required. "
+"Since this is a must-use plugin, you need to update it manually."
+msgstr ""
+"%1$s ist veraltet. Du verwendest Version %3$s, allerdings wird Version %2$s "
+"benötigt. Da es sich um ein obligatorisches Plugin handelt, musst du es "
+"manuell aktualisieren."
+
+#: leavesandlove-wp-plugin-loader.php:743
 msgid ""
 "%1$s is outdated. You are using version %3$s, but version %2$s is required."
 msgstr ""
-"%1$s ist veraltet. Sie verwenden Version %3$s, allerdings wird Version %2$s "
+"%1$s ist veraltet. Du verwendest Version %3$s, allerdings wird Version %2$s "
 "benötigt."
 
-#: leavesandlove-wp-plugin-loader.php:262
+#: leavesandlove-wp-plugin-loader.php:751
 msgid "Please update the above resources."
-msgstr "Bitte aktualisieren Sie die oben genannten Ressourcen."
+msgstr "Bitte aktualisiere die oben genannten Ressourcen."
 
-#: leavesandlove-wp-plugin-loader.php:535
+#: leavesandlove-wp-plugin-loader.php:926
+msgid "Missing request field %s."
+msgstr "Fehlendes Feld %s in der Anfrage."
+
+#: leavesandlove-wp-plugin-loader.php:948
+msgid "Missing capabilities."
+msgstr "Unzureichende Befugnisse."
+
+#: leavesandlove-wp-plugin-loader.php:953
+msgid "Notice for plugin %s has already been dismissed."
+msgstr "Mitteilung für Plugin %s wurde bereits ausgeblendet."
+
+#: leavesandlove-wp-plugin-loader.php:960
+msgid "Notice for plugin %s dismissed."
+msgstr "Mitteilung für Plugin %s ausgeblendet."
+
+#: leavesandlove-wp-plugin-loader.php:971
+msgid "Error: Missing dependencies!"
+msgstr "Fehler: Fehlende Abhängigkeiten!"
+
+#: leavesandlove-wp-plugin-util.php:159 leavesandlove-wp-plugin-util.php:178
+msgid "Network Activate"
+msgstr "Für alle Websites aktivieren"
+
+#: leavesandlove-wp-plugin-util.php:161
 msgid "Activate"
 msgstr "Aktivieren"
 
-#: leavesandlove-wp-plugin-loader.php:540
+#: leavesandlove-wp-plugin-util.php:169
 msgid "Install"
 msgstr "Installieren"
 
-#: leavesandlove-wp-plugin-loader.php:546
+#: leavesandlove-wp-plugin-util.php:187
 msgid "Update"
 msgstr "Aktualisieren"
 
-#: leavesandlove-wp-plugin.php:130
+#: leavesandlove-wp-plugin.php:268
 msgid "This message was added in %1$s version %2$s."
 msgstr "Diese Meldung wurde in %1$s Version %2$s hinzugefügt."
 
-#: leavesandlove-wp-plugin.php:131
+#: leavesandlove-wp-plugin.php:269
 msgid "%1$s was called <strong>incorrectly</strong>: %2$s %3$s"
 msgstr "%1$s wurde <strong>fehlerhaft</strong> aufgerufen: %2$s %3$s"
 
-#: leavesandlove-wp-plugin.php:138
+#: leavesandlove-wp-plugin.php:286
 msgid ""
 "%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no "
 "alternative available."
 msgstr ""
 "%1$s ist seit %4$s Version %2$s ohne Alternative <strong>veraltet</strong>."
 
-#: leavesandlove-wp-plugin.php:140
+#: leavesandlove-wp-plugin.php:288
 msgid ""
 "%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s "
 "instead!"
@@ -101,7 +140,7 @@ msgstr ""
 "%1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. Verwenden Sie "
 "stattdessen %3$s!"
 
-#: leavesandlove-wp-plugin.php:148
+#: leavesandlove-wp-plugin.php:306
 msgid ""
 "The action %1$s is <strong>deprecated</strong> as of %4$s version %2$s with "
 "no alternative available."
@@ -109,7 +148,7 @@ msgstr ""
 "Die Aktion %1$s ist seit %4$s Version %2$s ohne Alternative "
 "<strong>veraltet</strong>."
 
-#: leavesandlove-wp-plugin.php:150
+#: leavesandlove-wp-plugin.php:308
 msgid ""
 "The action %1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use "
 "%3$s instead!"
@@ -117,7 +156,7 @@ msgstr ""
 "Die Aktion %1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. "
 "Verwenden Sie stattdessen %3$s!"
 
-#: leavesandlove-wp-plugin.php:158
+#: leavesandlove-wp-plugin.php:326
 msgid ""
 "The filter %1$s is <strong>deprecated</strong> as of %4$s version %2$s with "
 "no alternative available."
@@ -125,7 +164,7 @@ msgstr ""
 "Der Filter %1$s ist seit %4$s Version %2$s ohne Alternative "
 "<strong>veraltet</strong>."
 
-#: leavesandlove-wp-plugin.php:160
+#: leavesandlove-wp-plugin.php:328
 msgid ""
 "The filter %1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use "
 "%3$s instead!"
@@ -133,7 +172,7 @@ msgstr ""
 "Der Filter %1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. "
 "Verwenden Sie stattdessen %3$s!"
 
-#: leavesandlove-wp-plugin.php:168
+#: leavesandlove-wp-plugin.php:346
 msgid ""
 "%1$s was called with an argument that is <strong>deprecated</strong> as of "
 "%4$s version %2$s. %3$s"
@@ -141,7 +180,7 @@ msgstr ""
 "%1$s wurde mit einem Argument aufgerufen, was seit seit %4$s Version %2$s "
 "<strong>veraltet</strong> ist. %3$s"
 
-#: leavesandlove-wp-plugin.php:170
+#: leavesandlove-wp-plugin.php:348
 msgid ""
 "%1$s was called with an argument that is <strong>deprecated</strong> as of "
 "%4$s version %2$s with no alternative available."
