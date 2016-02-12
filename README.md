@@ -44,6 +44,18 @@ Then you initialize the main class from your plugin's main file. The following c
 
 ```php
 <?php
+/*
+Plugin Name: My Plugin
+Plugin URI: https://wordpress.org/plugins/my-plugin/
+Description: This is my plugin's description.
+Version: 1.0.0
+Author: John Doe
+Author URI: http://example.com
+License: GNU General Public License v3
+License URI: http://www.gnu.org/licenses/gpl-3.0.html
+Text Domain: my-plugin
+*/
+
 // the following if clause requires the autoloader file (if the class is not yet available)
 if ( ! class_exists( 'MyPluginNamespace\App' ) ) {
   if ( file_exists( dirname( __FILE__ ) . '/my-plugin/vendor/autoload.php' ) ) {
