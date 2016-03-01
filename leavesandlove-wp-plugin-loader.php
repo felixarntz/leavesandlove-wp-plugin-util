@@ -719,7 +719,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				$network_plugin_cmp = true;
 			} else {
 				$context = 'site';
-				$capability = 'install_plugins';
+				$capability = 'activate_plugins';
 				$network_plugin_cmp = false;
 			}
 
