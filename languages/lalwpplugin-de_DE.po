@@ -1,10 +1,10 @@
 # Copyright (c) 2014-2015 Felix Arntz
 msgid ""
 msgstr ""
-"Project-Id-Version: leaves-wp-plugin-util 2.0.1\n"
+"Project-Id-Version: leaves-wp-plugin-util 2.0.2\n"
 "Report-Msgid-Bugs-To: http://leaves-and-love.net\n"
-"POT-Creation-Date: 2016-02-12 06:45:18+00:00\n"
-"PO-Revision-Date: 2016-02-12 07:45+0100\n"
+"POT-Creation-Date: 2016-07-09 11:25:57+00:00\n"
+"PO-Revision-Date: 2016-07-09 13:26+0100\n"
 "Last-Translator: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language-Team: Felix Arntz <felix-arntz@leaves-and-love.net>\n"
 "Language: de_DE\n"
@@ -117,22 +117,22 @@ msgstr "Installieren"
 msgid "Update"
 msgstr "Aktualisieren"
 
-#: leavesandlove-wp-plugin.php:268
+#: leavesandlove-wp-plugin.php:274
 msgid "This message was added in %1$s version %2$s."
 msgstr "Diese Meldung wurde in %1$s Version %2$s hinzugefügt."
 
-#: leavesandlove-wp-plugin.php:269
+#: leavesandlove-wp-plugin.php:275
 msgid "%1$s was called <strong>incorrectly</strong>: %2$s %3$s"
 msgstr "%1$s wurde <strong>fehlerhaft</strong> aufgerufen: %2$s %3$s"
 
-#: leavesandlove-wp-plugin.php:286
+#: leavesandlove-wp-plugin.php:292
 msgid ""
 "%1$s is <strong>deprecated</strong> as of %4$s version %2$s with no "
 "alternative available."
 msgstr ""
 "%1$s ist seit %4$s Version %2$s ohne Alternative <strong>veraltet</strong>."
 
-#: leavesandlove-wp-plugin.php:288
+#: leavesandlove-wp-plugin.php:294
 msgid ""
 "%1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use %3$s "
 "instead!"
@@ -140,7 +140,7 @@ msgstr ""
 "%1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. Verwenden Sie "
 "stattdessen %3$s!"
 
-#: leavesandlove-wp-plugin.php:306
+#: leavesandlove-wp-plugin.php:312
 msgid ""
 "The action %1$s is <strong>deprecated</strong> as of %4$s version %2$s with "
 "no alternative available."
@@ -148,7 +148,7 @@ msgstr ""
 "Die Aktion %1$s ist seit %4$s Version %2$s ohne Alternative "
 "<strong>veraltet</strong>."
 
-#: leavesandlove-wp-plugin.php:308
+#: leavesandlove-wp-plugin.php:314
 msgid ""
 "The action %1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use "
 "%3$s instead!"
@@ -156,7 +156,7 @@ msgstr ""
 "Die Aktion %1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. "
 "Verwenden Sie stattdessen %3$s!"
 
-#: leavesandlove-wp-plugin.php:326
+#: leavesandlove-wp-plugin.php:332
 msgid ""
 "The filter %1$s is <strong>deprecated</strong> as of %4$s version %2$s with "
 "no alternative available."
@@ -164,7 +164,7 @@ msgstr ""
 "Der Filter %1$s ist seit %4$s Version %2$s ohne Alternative "
 "<strong>veraltet</strong>."
 
-#: leavesandlove-wp-plugin.php:328
+#: leavesandlove-wp-plugin.php:334
 msgid ""
 "The filter %1$s is <strong>deprecated</strong> as of %4$s version %2$s. Use "
 "%3$s instead!"
@@ -172,7 +172,7 @@ msgstr ""
 "Der Filter %1$s ist seit %4$s Version %2$s <strong>veraltet</strong>. "
 "Verwenden Sie stattdessen %3$s!"
 
-#: leavesandlove-wp-plugin.php:346
+#: leavesandlove-wp-plugin.php:352
 msgid ""
 "%1$s was called with an argument that is <strong>deprecated</strong> as of "
 "%4$s version %2$s. %3$s"
@@ -180,7 +180,7 @@ msgstr ""
 "%1$s wurde mit einem Argument aufgerufen, was seit seit %4$s Version %2$s "
 "<strong>veraltet</strong> ist. %3$s"
 
-#: leavesandlove-wp-plugin.php:348
+#: leavesandlove-wp-plugin.php:354
 msgid ""
 "%1$s was called with an argument that is <strong>deprecated</strong> as of "
 "%4$s version %2$s with no alternative available."

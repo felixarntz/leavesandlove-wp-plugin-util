@@ -153,10 +153,16 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 					if ( 0 === strpos( static::$_args['mode'], 'bundled' ) ) {
 						$locale = apply_filters( 'plugin_locale', get_locale(), static::$_args['textdomain'] );
 						return load_textdomain( static::$_args['textdomain'], WP_LANG_DIR . '/plugins/' . static::$_args['textdomain'] . '-' . $locale . '.mo' );
-					} elseif ( 'muplugin' === static::$_args['mode'] ) {
-						return load_muplugin_textdomain( static::$_args['textdomain'] );
 					} else {
-						return load_plugin_textdomain( static::$_args['textdomain'] );
+						// As of WordPress 4.6 there's no need to manually load the textdomain.
+						if ( version_compare( get_bloginfo( 'version' ), '4.6', '>=' ) ) {
+							return true;
+						}
+						if ( 'muplugin' === static::$_args['mode'] ) {
+							return load_muplugin_textdomain( static::$_args['textdomain'] );
+						} else {
+							return load_plugin_textdomain( static::$_args['textdomain'] );
+						}
 					}
 				}
 			}

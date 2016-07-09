@@ -456,9 +456,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				// for network wide activations, run the regular activation process for each site of the network
 				if ( 'network' === $context ) {
-					$blogs = wp_get_sites();
-					foreach ( $blogs as $blog ) {
-						switch_to_blog( $blog['blog_id'] );
+					$site_ids = self::_get_site_ids();
+					foreach ( $site_ids as $site_id ) {
+						switch_to_blog( $site_id );
 
 						$status = self::_activate_plugin( $plugin_class, 'site', $do_install );
 						if ( ! $status ) {
@@ -548,9 +548,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				// for network wide activations, run the regular deactivation process for each site of the network
 				if ( 'network' === $context ) {
-					$blogs = wp_get_sites();
-					foreach ( $blogs as $blog ) {
-						switch_to_blog( $blog['blog_id'] );
+					$site_ids = self::_get_site_ids();
+					foreach ( $site_ids as $site_id ) {
+						switch_to_blog( $site_id );
 
 						$status = self::_deactivate_plugin( $plugin_class, 'site' );
 						if ( ! $status ) {
@@ -630,9 +630,9 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 
 				// for network wide activations, run the regular uninstall process for each site of the network
 				if ( 'network' === $context ) {
-					$blogs = wp_get_sites();
-					foreach ( $blogs as $blog ) {
-						switch_to_blog( $blog['blog_id'] );
+					$site_ids = self::_get_site_ids();
+					foreach ( $site_ids as $site_id ) {
+						switch_to_blog( $site_id );
 
 						$status = self::_uninstall_plugin( $plugin_class, 'site' );
 						if ( ! $status ) {
@@ -1223,6 +1223,35 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 			}
 
 			return ! empty( $status );
+		}
+
+		/**
+		 * Returns an array of site IDs.
+		 *
+		 * The function `wp_get_sites()` has been deprecated in WordPress 4.6 in favor of the new `get_sites()`.
+		 *
+		 * @since 2.0.2
+		 * @param boolean $all_networks Whether to return not only sites in the current network, but from all networks.
+		 * @return array Array of site IDs.
+		 */
+		private static function _get_site_ids( $all_networks = false ) {
+			if ( ! function_exists( 'get_sites' ) || ! function_exists( 'get_current_network_id' ) ) {
+				$args = array();
+				if ( $all_networks ) {
+					$args['network_id'] = 0;
+				}
+
+				$sites = wp_get_sites( $args );
+
+				return wp_list_pluck( $sites, 'blog_id' );
+			}
+
+			$args = array( 'fields' => 'ids' );
+			if ( ! $all_networks ) {
+				$args['network_id'] = get_current_network_id();
+			}
+
+			return get_sites( $args );
 		}
 
 		/**
