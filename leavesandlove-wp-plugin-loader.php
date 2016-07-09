@@ -145,6 +145,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				'textdomain'			=> '',
 				'use_language_packs'	=> false,
 				'is_library'			=> false,
+				'network_only'			=> false,
 			) );
 
 			$dependencies = wp_parse_args( $dependencies, array(
@@ -455,7 +456,7 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 				}
 
 				// for network wide activations, run the regular activation process for each site of the network
-				if ( 'network' === $context ) {
+				if ( 'network' === $context && ! call_user_func( array( $plugin_class, 'get_info' ), 'network_only' ) ) {
 					$site_ids = self::_get_site_ids();
 					foreach ( $site_ids as $site_id ) {
 						switch_to_blog( $site_id );
@@ -546,8 +547,8 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					$global_status = false;
 				}
 
-				// for network wide activations, run the regular deactivation process for each site of the network
-				if ( 'network' === $context ) {
+				// for network wide deactivations, run the regular deactivation process for each site of the network
+				if ( 'network' === $context && ! call_user_func( array( $plugin_class, 'get_info' ), 'network_only' ) ) {
 					$site_ids = self::_get_site_ids();
 					foreach ( $site_ids as $site_id ) {
 						switch_to_blog( $site_id );
@@ -628,8 +629,8 @@ if ( ! class_exists( 'LaL_WP_Plugin_Loader' ) ) {
 					$global_status = false;
 				}
 
-				// for network wide activations, run the regular uninstall process for each site of the network
-				if ( 'network' === $context ) {
+				// for network wide uninstallations, run the regular uninstall process for each site of the network
+				if ( 'network' === $context && ! call_user_func( array( $plugin_class, 'get_info' ), 'network_only' ) ) {
 					$site_ids = self::_get_site_ids();
 					foreach ( $site_ids as $site_id ) {
 						switch_to_blog( $site_id );

@@ -1,5 +1,8 @@
 == Changelog ==
 
+= 2.0.3 =
+* Added `network_only` arg
+
 = 2.0.2 =
 * Ensured compatibility with WordPress 4.6
 

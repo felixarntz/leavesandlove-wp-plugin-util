@@ -186,6 +186,8 @@ if ( ! class_exists( 'LaL_WP_Plugin' ) ) {
 		 * * `textdomain`
 		 * * `textdomain_dir`
 		 * * `use_language_packs` (whether the plugin uses wordpress.org language packs)
+		 * * `is_library` (whether the plugin is a library)
+		 * * `network_only` (whether the plugin is network only)
 		 *
 		 * @since 1.5.0
 		 * @param string $field field name to get value of (or empty to get all fields)
